@@ -92,13 +92,13 @@
 
   function buildRail() {
     const rail = h('aside', { class: 'rail', id: 'rail', 'aria-label': 'Sections' });
-    rail.appendChild(h('div', { class: 'brand' }, A.brandMark(), h('div', null, h('b', null, 'Tenurely'), h('small', { id: 'sheetLabel' }, sheetLabel()))));
+    rail.appendChild(h('div', { class: 'brand' }, A.brandMark(), h('div', null, h('b', null, 'Tenurely'), h('small', { id: 'sheetLabel' }, sheetLabel())), h('button', { class: 'btn quiet icon rail-close', type: 'button', 'aria-label': 'Close the menu', onClick: () => closeRail() }, A.icon('x', 18))));
     el.navLinks = {};
     NAV.forEach(g => {
       const grp = h('nav', { class: 'navgroup', 'aria-label': g.group || 'Main' }, g.group ? h('h6', null, g.group) : null);
       g.items.forEach(([id, label, count]) => {
         const ct = h('span', { class: 'ct' }, '');
-        const a = h('a', { class: 'nav', href: '#/' + id }, label, ct);
+        const a = h('a', { class: 'nav', href: '#/' + id, onClick: () => closeRail() }, label, ct);
         el.navLinks[id] = { a, ct, count };
         grp.appendChild(a);
       });
@@ -201,8 +201,8 @@
       isFile ? null : h('b', null, 'Could not refresh the data. '), A.status.error,
       noCopy || !A.status.at ? '' : ' Showing the copy saved ' + A.stamp(A.status.at) + '.', acts));
   }
-  function openRail() { el.rail.classList.add('open'); el.scrim.classList.add('on'); }
-  function closeRail() { el.rail.classList.remove('open'); if (!el.drawer.classList.contains('open')) el.scrim.classList.remove('on'); }
+  function openRail() { el.rail.classList.add('open'); el.scrim.classList.add('on'); document.body.classList.add('menu-open'); el.menuBtn.setAttribute('aria-expanded', 'true'); }
+  function closeRail() { el.rail.classList.remove('open'); document.body.classList.remove('menu-open'); if (el.menuBtn) el.menuBtn.setAttribute('aria-expanded', 'false'); if (!el.drawer.classList.contains('open')) el.scrim.classList.remove('on'); }
 
   /* ---------------- Data ---------------- */
   A.setData = function (db, meta) {
@@ -435,14 +435,22 @@
     el.themeBtn = h('button', { class: 'btn quiet icon', type: 'button', 'aria-label': 'Switch between light and dark', title: 'Switch between light and dark' });
     const gear = h('button', { class: 'btn quiet icon', type: 'button', 'aria-label': 'Settings', title: 'Settings' }, A.icon('sliders', 17));
     el.installBtn = h('button', { class: 'btn hide-sm', type: 'button', style: { display: 'none' }, title: 'Install this as an app on your computer' }, A.icon('download', 15), 'Install app');
-    const menu = h('button', { class: 'btn quiet icon menu-btn', type: 'button', 'aria-label': 'Open the menu' }, A.icon('menu', 19));
+    const menu = el.menuBtn = h('button', { class: 'btn quiet icon menu-btn', type: 'button', 'aria-label': 'Open the menu', 'aria-expanded': 'false', 'aria-controls': 'rail' }, A.icon('menu', 19));
     el.page = h('main', { class: 'page', id: 'page', tabindex: '-1' });
     el.main = h('div', { class: 'main' }, h('header', { class: 'topbar' }, menu, searchBox, h('span', { class: 'spacer' }), el.installBtn, el.refreshBtn, el.themeBtn, gear), el.page);
     root.appendChild(h('div', { class: 'app' }, el.rail, el.main));
     root.appendChild(el.scrim); root.appendChild(el.drawer);
 
     applyTheme();
-    menu.addEventListener('click', openRail);
+    // Narrow screens: the menu slides over the page. Wide screens: the button hides or shows the sidebar.
+    const wide = () => window.matchMedia('(min-width: 861px)').matches;
+    const appEl = root.querySelector('.app');
+    if (A.store.get('railHidden', false)) appEl.classList.add('rail-hidden');
+    menu.addEventListener('click', () => {
+      if (wide()) { const hide = !appEl.classList.contains('rail-hidden'); appEl.classList.toggle('rail-hidden', hide); A.store.set('railHidden', hide); menu.setAttribute('aria-label', hide ? 'Show the menu' : 'Hide the menu'); return; }
+      el.rail.classList.contains('open') ? closeRail() : openRail();
+    });
+    window.addEventListener('resize', A.debounce(() => { if (wide()) closeRail(); }, 150));
     gear.addEventListener('click', openDrawer);
     document.addEventListener('fma:settings', openDrawer);
     el.refreshBtn.addEventListener('click', () => A.refresh({ manual: true }));

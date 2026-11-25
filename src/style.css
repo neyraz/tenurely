@@ -297,7 +297,8 @@ svg .mark.hot { filter: brightness(1.14); }
 @media (max-width: 860px) {
   .app { grid-template-columns: minmax(0, 1fr); }
   .rail { position: fixed; left: 0; top: 0; bottom: 0; width: 280px; transform: translateX(-102%); transition: transform .2s ease; box-shadow: var(--shadow); }
-  .rail.open { transform: none; }
+  .rail.open { transform: none; z-index: 60; } /* above the dimmed overlay (z-index 50), so its links can be tapped */
+  .rail-close { display: inline-flex; }
   .menu-btn { display: inline-flex; }
   .topbar { padding: 10px 14px; }
   .page { padding: 20px 16px 80px; }
@@ -358,3 +359,14 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
 
 .brandmark { display: inline-block; flex: none; }
 .brandmark svg { width: 100%; height: 100%; display: block; }
+
+.rail-close { display: none; margin-left: auto; }
+@media (max-width: 860px) { .rail-close { display: inline-flex; } }
+body.menu-open { overflow: hidden; }
+
+/* Wide screens: the sidebar is always there; the menu button hides or shows it to give the page more room. */
+@media (min-width: 861px) {
+  .menu-btn { display: inline-flex; }
+  .app.rail-hidden { grid-template-columns: minmax(0, 1fr); }
+  .app.rail-hidden .rail { display: none; }
+}
