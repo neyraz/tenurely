@@ -1,5 +1,5 @@
 /* ============================================================
-   Faculty Market Atlas - utilities
+   Tenurely - utilities
    Everything lives on one namespace, A. No external libraries.
    All sheet content is untrusted (anonymous editors), so the UI
    is built with DOM nodes and textContent, never innerHTML.

@@ -1,12 +1,12 @@
 {
-  "name": "Faculty Market Atlas",
-  "short_name": "Market Atlas",
-  "description": "Browse, search and chart your faculty job-market spreadsheet.",
+  "name": "Tenurely",
+  "short_name": "Tenurely",
+  "description": "Follow the faculty job market: postings, replies, your applications and what changed today.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f6f7f9",
-  "theme_color": "#0f4a96",
+  "theme_color": "#2a2a2a",
   "icons": [
     {
       "src": "icons/icon-192.png",

@@ -226,19 +226,19 @@
     make() {
       const settings = {};
       SETTINGS.forEach(k => { const v = A.store.get(k, undefined); if (v !== undefined && v !== null) settings[k] = v; });
-      return { app: 'faculty-market-atlas', version: 1, exported: new Date().toISOString(), settings, saved: A.store.get('saved', []), mine: A.store.get('mine', {}) };
+      return { app: 'tenurely', version: 1, exported: new Date().toISOString(), settings, saved: A.store.get('saved', []), mine: A.store.get('mine', {}) };
     },
     download() {
       const blob = new Blob([JSON.stringify(this.make(), null, 1)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
-      const a = A.h('a', { href: url, download: 'faculty-market-atlas-backup-' + A.isoDay(Date.now()) + '.json' });
+      const a = A.h('a', { href: url, download: 'tenurely-backup-' + A.isoDay(Date.now()) + '.json' });
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 2000);
     },
     parse(text) {
       let j;
       try { j = JSON.parse(text); } catch (e) { throw new Error('This is not a backup file from this app.'); }
-      if (!j || j.app !== 'faculty-market-atlas') throw new Error('This is not a backup file from this app.');
+      if (!j || (j.app !== 'tenurely' && j.app !== 'faculty-market-atlas')) throw new Error('This is not a backup file from this app.');
       return { data: j, apps: Object.values(j.mine || {}).filter(e => e.applied || e.status).length, notes: Object.values(j.mine || {}).filter(e => e.note).length, saved: (j.saved || []).length, exported: j.exported };
     },
     restore(j) {

@@ -28,11 +28,11 @@
     svg.innerHTML = ICON[name] || ''; // static, trusted markup only
     return svg;
   };
-  A.brandMark = function () {
-    const svg = s('svg', { viewBox: '0 0 30 30', width: 30, height: 30, 'aria-hidden': 'true' });
-    const o = [[0, 0, .28], [1, 0, .55], [2, 0, 1], [0, 1, .55], [1, 1, 1], [2, 1, .4], [0, 2, 1], [1, 2, .4], [2, 2, .75]];
-    o.forEach(([cx, cy, op]) => svg.appendChild(s('rect', { x: cx * 10 + 1, y: cy * 10 + 1, width: 8, height: 8, rx: 2, style: { fill: 'var(--accent)', opacity: String(op) } })));
-    return svg;
+  // The Tenurely owl. The build places the logo's SVG in A.LOGO (static, trusted markup).
+  A.brandMark = function (size) {
+    const box = h('span', { class: 'brandmark', 'aria-hidden': 'true', style: { width: (size || 36) + 'px', height: (size || 36) + 'px' } });
+    box.innerHTML = A.LOGO || '';
+    return box;
   };
 
   /* ---------- Shared state ---------- */

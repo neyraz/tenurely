@@ -1,4 +1,4 @@
-# Faculty Market Atlas: put it on GitHub and install it on your computer
+# Tenurely: put it on GitHub and install it on your computer
 
 This package turns your job-market spreadsheet into a small app. It is hosted for free on GitHub Pages and you can install it on Windows or Mac like any other program. Every time you open it, it checks whether your data is a day old and, if so, reads the Google Sheet again.
 
@@ -22,7 +22,7 @@ You do not need to write any code. Part 1 takes about ten minutes and you do it 
 
 1. Go to **github.com** and sign in. If you have no account, create a free one.
 2. Click the **+** at the top right, then **New repository**.
-3. Name it `faculty-market-atlas`. Choose **Public**. Leave "Add a README file" **unticked**. Click **Create repository**.
+3. Name it `tenurely` (any name works; it becomes part of the web address). Choose **Public**. Leave "Add a README file" **unticked**. Click **Create repository**.
    - Free accounts can only publish a Pages site from a public repository.
 4. On the next page, click the link **uploading an existing file**.
 5. Unzip this package on your computer. Open the unzipped folder, select **everything inside it** (`docs`, `src`, `build.py`, `README.md`) and drag it onto the GitHub page.
@@ -33,7 +33,7 @@ You do not need to write any code. Part 1 takes about ten minutes and you do it 
    - **Source:** Deploy from a branch
    - **Branch:** `main`, and the folder **`/docs`**
    - Click **Save**.
-8. Wait one to two minutes and reload that page. A box appears saying **Your site is live at** `https://YOUR-USERNAME.github.io/faculty-market-atlas/`. Open that address.
+8. Wait one to two minutes and reload that page. A box appears saying **Your site is live at** `https://YOUR-USERNAME.github.io/tenurely/` (with your repository's name at the end). Open that address.
 
 GitHub changes its screens from time to time, so a button may be labelled a little differently. The settings you want are "Deploy from a branch", `main`, `/docs`.
 
@@ -50,7 +50,7 @@ Open your `github.io` address in the browser you prefer.
 
 **Windows or Mac, Chrome or Edge**
 - Click the **Install app** button at the top of the page, or the install icon at the right end of the address bar (a small screen with a down arrow).
-- Or open the browser menu (three dots) and choose **Install Faculty Market Atlas** (Chrome: under "Cast, save and share"; Edge: under "Apps").
+- Or open the browser menu (three dots) and choose **Install Tenurely** (Chrome: under "Cast, save and share"; Edge: under "Apps").
 - Confirm. The app opens in its own window with its own icon.
 
 **Mac, Safari** (macOS Sonoma 14 or later)

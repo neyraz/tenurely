@@ -92,7 +92,7 @@
 
   function buildRail() {
     const rail = h('aside', { class: 'rail', id: 'rail', 'aria-label': 'Sections' });
-    rail.appendChild(h('div', { class: 'brand' }, A.brandMark(), h('div', null, h('b', null, 'Faculty Market Atlas'), h('small', { id: 'sheetLabel' }, sheetLabel()))));
+    rail.appendChild(h('div', { class: 'brand' }, A.brandMark(), h('div', null, h('b', null, 'Tenurely'), h('small', { id: 'sheetLabel' }, sheetLabel()))));
     el.navLinks = {};
     NAV.forEach(g => {
       const grp = h('nav', { class: 'navgroup', 'aria-label': g.group || 'Main' }, g.group ? h('h6', null, g.group) : null);
@@ -145,7 +145,7 @@
     const { name, params } = parseRoute();
     const view = A.views[name] ? name : 'today';
     Object.keys(el.navLinks).forEach(id => { if (id === view) el.navLinks[id].a.setAttribute('aria-current', 'page'); else el.navLinks[id].a.removeAttribute('aria-current'); });
-    document.title = (TITLES[view] || 'Atlas') + ' | Faculty Market Atlas';
+    document.title = (TITLES[view] || 'Tenurely') + ' | Tenurely';
     if (view === 'search') el.search.value = params.q || ''; else if (document.activeElement !== el.search) el.search.value = '';
     A.clear(el.page);
     if (!A.db) { el.page.appendChild(sheetId() ? loadingView() : setupView()); return; }
