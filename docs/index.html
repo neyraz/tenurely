@@ -1,0 +1,2837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Faculty Market Atlas</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f4a96'/%3E%3Crect x='6' y='6' width='8' height='8' rx='2' fill='%23cce3fd'/%3E%3Crect x='18' y='6' width='8' height='8' rx='2' fill='%236aabf1'/%3E%3Crect x='6' y='18' width='8' height='8' rx='2' fill='%236aabf1'/%3E%3Crect x='18' y='18' width='8' height='8' rx='2' fill='%23257de0'/%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f4a96">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<script>try{var t=JSON.parse(localStorage.getItem("fma.theme"));if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<style>
+/* ---------- Tokens ---------- */
+:root {
+  --plane: #f6f7f9; --surface: #ffffff; --surface2: #f0f2f5;
+  --ink: #14181f; --ink2: #5b6472; --ink3: #8a93a0;
+  --line: #e3e6ea; --grid: #e7e7e7; --axis: #c2c2c2;
+  --accent: #1757ac; --accent-wash: #e8f0fb; --focus: #257de0;
+  --s1: #257de0; --s2: #f47230; --s3: #00b894; --s4: #f2a600; --s5: #ee7fac; --s6: #008a17; --s7: #6a4ce2; --s8: #ec4647;
+  --seq1: #cce3fd; --seq2: #9dc8f7; --seq3: #6aabf1; --seq4: #2370cd; --seq5: #0f4a96;
+  --seq1-ink: #14181f; --seq2-ink: #14181f; --seq3-ink: #14181f; --seq4-ink: #fff; --seq5-ink: #fff;
+  --good: #006c10; --serious: #f18a59;
+  --mark: rgba(242, 166, 0, .34);
+  --shadow: 0 1px 2px rgba(11, 11, 11, .05), 0 10px 30px rgba(11, 11, 11, .10);
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI Variable", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --plane: #0b0b0b; --surface: #191919; --surface2: #232323;
+  --ink: #efefef; --ink2: #9c9c9c; --ink3: #737373;
+  --line: #2b2b2b; --grid: #303030; --axis: #474747;
+  --accent: #6aabf1; --accent-wash: #1b2a3d; --focus: #338ced;
+  --s1: #338ced; --s2: #e76624; --s3: #00a888; --s4: #d28e05; --s5: #e24d8b; --s6: #0aac23; --s7: #9887ef; --s8: #eb6263;
+  --seq1: #0e3d7e; --seq2: #1757ac; --seq3: #2370cd; --seq4: #519ced; --seq5: #9dc8f7;
+  --seq1-ink: #fff; --seq2-ink: #fff; --seq3-ink: #fff; --seq4-ink: #0b0b0b; --seq5-ink: #0b0b0b;
+  --good: #53c556;
+  --mark: rgba(210, 142, 5, .45);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px rgba(0, 0, 0, .5);
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --plane: #0b0b0b; --surface: #191919; --surface2: #232323;
+    --ink: #efefef; --ink2: #9c9c9c; --ink3: #737373;
+    --line: #2b2b2b; --grid: #303030; --axis: #474747;
+    --accent: #6aabf1; --accent-wash: #1b2a3d; --focus: #338ced;
+    --s1: #338ced; --s2: #e76624; --s3: #00a888; --s4: #d28e05; --s5: #e24d8b; --s6: #0aac23; --s7: #9887ef; --s8: #eb6263;
+    --seq1: #0e3d7e; --seq2: #1757ac; --seq3: #2370cd; --seq4: #519ced; --seq5: #9dc8f7;
+    --seq1-ink: #fff; --seq2-ink: #fff; --seq3-ink: #fff; --seq4-ink: #0b0b0b; --seq5-ink: #0b0b0b;
+    --good: #53c556;
+    --mark: rgba(210, 142, 5, .45);
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px rgba(0, 0, 0, .5);
+    color-scheme: dark;
+  }
+}
+
+/* ---------- Base ---------- */
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--plane); color: var(--ink); font: 14.5px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
+h1, h2, h3, h4, p { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+[hidden] { display: none !important; }
+mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1px; }
+.num, .tnum { font-variant-numeric: tabular-nums; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- Shell ---------- */
+.app { display: grid; grid-template-columns: 252px minmax(0, 1fr); min-height: 100vh; }
+.rail { position: sticky; top: 0; height: 100vh; overflow: auto; background: var(--surface); border-right: 1px solid var(--line); padding: 20px 12px 16px; display: flex; flex-direction: column; gap: 18px; z-index: 40; }
+.brand { display: flex; gap: 10px; align-items: center; padding: 0 8px; }
+.brand svg { flex: none; }
+.brand b { font-family: var(--serif); font-size: 18px; font-weight: 600; letter-spacing: -.005em; line-height: 1.15; display: block; }
+.brand small { color: var(--ink2); font-size: 12px; display: block; margin-top: 1px; }
+.navgroup { display: grid; gap: 2px; }
+.navgroup h6 { margin: 0; padding: 0 10px 4px; font-size: 12px; font-weight: 600; color: var(--ink3); }
+.nav { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 6px; color: var(--ink2); font-weight: 500; cursor: pointer; }
+.nav:hover { background: var(--surface2); color: var(--ink); text-decoration: none; }
+.nav[aria-current="page"] { background: var(--accent-wash); color: var(--accent); font-weight: 600; }
+.nav .ct { margin-left: auto; font-size: 12px; color: var(--ink3); font-variant-numeric: tabular-nums; }
+.nav[aria-current="page"] .ct { color: var(--accent); opacity: .8; }
+.railfoot { margin-top: auto; padding: 12px 10px 0; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--ink2); display: grid; gap: 8px; }
+.railfoot .row { display: flex; align-items: center; gap: 8px; }
+.dot-live { width: 8px; height: 8px; border-radius: 50%; background: var(--good); flex: none; }
+.dot-live.busy { background: var(--s4); animation: pulse 1.1s ease-in-out infinite; }
+.dot-live.off { background: var(--ink3); }
+@keyframes pulse { 50% { opacity: .35; } }
+
+.main { min-width: 0; }
+.topbar { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 10px; padding: 10px 28px; background: var(--plane); border-bottom: 1px solid var(--line); }
+@supports (background: color-mix(in srgb, red, blue)) { .topbar { background: color-mix(in srgb, var(--plane) 90%, transparent); backdrop-filter: blur(10px); } }
+.topbar .search { flex: 1 1 auto; max-width: 520px; }
+.topbar .spacer { flex: 1; }
+.menu-btn { display: none; }
+.page { max-width: 1220px; margin: 0 auto; padding: 28px 28px 96px; transition: opacity .15s; }
+.main.busy .page { opacity: .62; }
+.pagehead { margin-bottom: 20px; }
+.pagehead h1 { font-family: var(--serif); font-size: 30px; font-weight: 600; letter-spacing: -.012em; line-height: 1.15; }
+.pagehead .lede { color: var(--ink2); margin-top: 6px; max-width: 70ch; font-size: 15px; }
+.section { margin-top: 36px; }
+.section > h2 { font-family: var(--serif); font-size: 21px; font-weight: 600; letter-spacing: -.005em; margin-bottom: 4px; }
+.section > .lede { color: var(--ink2); max-width: 74ch; margin-bottom: 14px; }
+.section > h2 + .grid, .section > h2 + .stats { margin-top: 14px; }
+
+/* ---------- Controls ---------- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 34px; padding: 0 13px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-weight: 500; cursor: pointer; white-space: nowrap; text-decoration: none; }
+.btn:hover { background: var(--surface2); text-decoration: none; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+:root[data-theme="dark"] .btn.primary { color: #0b0b0b; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.primary { color: #0b0b0b; } }
+.btn.primary:hover { filter: brightness(1.08); background: var(--accent); }
+.btn.quiet { border-color: transparent; background: transparent; color: var(--ink2); }
+.btn.quiet:hover { background: var(--surface2); color: var(--ink); }
+.btn.quiet[aria-pressed="true"] { background: var(--accent-wash); color: var(--accent); }
+.btn.sm { height: 28px; padding: 0 10px; font-size: 13px; }
+.btn.icon { width: 34px; padding: 0; }
+.btn.icon.sm { width: 28px; }
+.input, select.input { height: 34px; padding: 0 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); min-width: 0; }
+.input::placeholder { color: var(--ink3); }
+textarea.input { height: auto; padding: 8px 10px; width: 100%; resize: vertical; }
+.search { position: relative; }
+.search .input { width: 100%; padding-left: 34px; }
+.search svg { position: absolute; left: 10px; top: 9px; color: var(--ink3); pointer-events: none; }
+.search .clear { position: absolute; right: 4px; top: 3px; }
+.chipbtn { height: 30px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink2); font-size: 13px; font-weight: 500; cursor: pointer; }
+.chipbtn:hover { background: var(--surface2); color: var(--ink); }
+.chipbtn[aria-pressed="true"] { background: var(--accent-wash); border-color: transparent; color: var(--accent); font-weight: 600; }
+.seg-tabs { display: inline-flex; gap: 2px; padding: 3px; background: var(--surface2); border-radius: 8px; }
+.seg-tabs button { border: 0; background: transparent; height: 28px; padding: 0 12px; border-radius: 6px; color: var(--ink2); font-weight: 500; cursor: pointer; }
+.seg-tabs button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0, 0, 0, .12); }
+
+/* ---------- Cards, grids, stats ---------- */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; min-width: 0; }
+.card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+.card h3 { font-size: 15px; font-weight: 600; line-height: 1.3; }
+.card .sub { color: var(--ink2); font-size: 13px; margin-top: 2px; max-width: 60ch; }
+.card-tools { display: flex; gap: 4px; flex: none; }
+.grid { display: grid; gap: 16px; align-items: start; }
+.g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.g21 { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; min-width: 0; }
+.stat .lbl { color: var(--ink2); font-size: 13px; }
+.stat .val { font-size: 28px; font-weight: 600; line-height: 1.15; margin-top: 3px; letter-spacing: -.01em; }
+.stat .note { color: var(--ink2); font-size: 12.5px; margin-top: 4px; }
+.stat.click { cursor: pointer; }
+.stat.click:hover { border-color: var(--axis); }
+.hero { display: flex; align-items: flex-end; gap: 22px; flex-wrap: wrap; margin: 4px 0 24px; }
+.hero .big { font-size: 64px; font-weight: 600; letter-spacing: -.025em; line-height: .95; }
+.hero .words { font-family: var(--serif); font-size: 23px; line-height: 1.3; max-width: 36ch; padding-bottom: 3px; color: var(--ink); }
+.hero .words span { color: var(--ink2); }
+.note-line { color: var(--ink2); font-size: 13px; max-width: 80ch; }
+.banner { display: flex; gap: 12px; align-items: flex-start; padding: 11px 14px; border: 1px solid var(--line); border-left: 3px solid var(--serious); background: var(--surface); border-radius: 6px; margin-bottom: 18px; font-size: 13.5px; }
+.banner.info { border-left-color: var(--s1); }
+.banner b { font-weight: 600; }
+.banner .acts { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.empty { padding: 36px 12px; text-align: center; color: var(--ink2); }
+.empty b { display: block; color: var(--ink); margin-bottom: 4px; font-size: 15px; }
+
+/* ---------- Reading lists ---------- */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+.toolbar .search { flex: 1 1 280px; min-width: 200px; max-width: 460px; }
+.toolbar .input { max-width: 100%; }
+.togglebar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; }
+.countline { display: flex; justify-content: space-between; align-items: center; gap: 10px; color: var(--ink2); font-size: 13px; padding: 6px 0 8px; border-bottom: 1px solid var(--line); }
+.list { display: block; }
+.row { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 4px 12px; padding: 14px 4px; border-bottom: 1px solid var(--line); }
+.row.nostar { grid-template-columns: minmax(0, 1fr) auto; }
+.row-main { min-width: 0; }
+.row-title { font-size: 15px; font-weight: 600; line-height: 1.35; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }
+.row-sub { color: var(--ink2); margin-top: 1px; }
+.row-side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; text-align: right; font-size: 13px; color: var(--ink2); }
+.row-side time { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.star { border: 0; background: transparent; color: var(--ink3); width: 28px; height: 28px; border-radius: 6px; cursor: pointer; display: grid; place-items: center; }
+.star:hover { background: var(--surface2); color: var(--ink); }
+.star[aria-pressed="true"] { color: var(--s4); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.chip { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; background: var(--surface2); color: var(--ink2); font-size: 12px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip.accent { background: var(--accent-wash); color: var(--accent); font-weight: 600; }
+.chip.link { cursor: pointer; }
+.chip.link:hover { background: var(--line); color: var(--ink); }
+.pill-new { font-size: 11.5px; font-weight: 600; color: var(--accent); background: var(--accent-wash); padding: 1px 7px; border-radius: 999px; }
+.badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--ink); }
+.badge i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.notes { margin-top: 10px; display: grid; gap: 6px; }
+.note { border-left: 2px solid var(--line); padding: 1px 0 1px 10px; color: var(--ink2); font-size: 13.5px; white-space: pre-line; overflow-wrap: anywhere; }
+.linkbtn { border: 0; background: none; padding: 0; color: var(--accent); font-size: 13px; font-weight: 500; cursor: pointer; justify-self: start; }
+.linkbtn:hover { text-decoration: underline; text-underline-offset: 2px; }
+a.ext svg { display: inline-block; vertical-align: -2px; margin-left: 3px; opacity: .7; }
+.more { display: flex; justify-content: center; padding: 18px 0 4px; }
+.kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px 18px; margin-top: 10px; }
+.kv div { min-width: 0; }
+.kv dt { color: var(--ink3); font-size: 12px; margin: 0; }
+.kv dd { margin: 1px 0 0; font-weight: 500; overflow-wrap: anywhere; }
+.kv dd small { color: var(--ink2); font-weight: 400; }
+
+/* threads (conversations, culture, locations) */
+.thread { padding: 16px 4px; border-bottom: 1px solid var(--line); max-width: 860px; }
+.thread-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; color: var(--ink2); font-size: 13px; margin-bottom: 4px; }
+.thread-head b { color: var(--ink); font-size: 15px; font-weight: 600; }
+.post { font-size: 15px; white-space: pre-line; overflow-wrap: anywhere; }
+.replies { margin-top: 8px; display: grid; gap: 6px; }
+.reply { background: var(--surface2); border-radius: 10px; padding: 8px 12px; font-size: 14px; white-space: pre-line; overflow-wrap: anywhere; max-width: 78ch; }
+.cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 8px; }
+.cols2 h5 { margin: 0 0 2px; font-size: 12px; font-weight: 600; color: var(--ink3); }
+.cols2 p { white-space: pre-line; overflow-wrap: anywhere; }
+
+/* tables */
+.table-wrap { overflow: auto; max-height: 360px; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table th { text-align: left; font-weight: 600; color: var(--ink2); padding: 6px 8px; border-bottom: 1px solid var(--axis); position: sticky; top: 0; background: var(--surface); }
+.data-table td { padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.data-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.plain-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.plain-table th { text-align: left; color: var(--ink2); font-weight: 600; padding: 8px 10px 8px 0; border-bottom: 1px solid var(--axis); }
+.plain-table td { padding: 8px 10px 8px 0; border-bottom: 1px solid var(--line); }
+.plain-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* compact panel lists on the overview */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px 6px; min-width: 0; }
+.panel > header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+.panel h3 { font-size: 15px; font-weight: 600; }
+.mini { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.mini:first-of-type { border-top: 0; }
+.mini .t { font-weight: 600; overflow-wrap: anywhere; }
+.mini .s { color: var(--ink2); font-size: 13px; overflow-wrap: anywhere; }
+.mini time { color: var(--ink2); font-size: 12.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.mini .q { grid-column: 1 / -1; color: var(--ink2); font-size: 13px; }
+
+/* ---------- Charts ---------- */
+.chart-body { min-height: 40px; }
+.chart-body svg { display: block; max-width: 100%; overflow: visible; }
+.tick { font: 11px var(--sans); fill: var(--ink2); }
+.axis-title { font: 11.5px var(--sans); fill: var(--ink2); }
+.rowlabel { font: 12.5px var(--sans); fill: var(--ink); }
+.endlabel { font: 600 12px var(--sans); fill: var(--ink); }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .axis { stroke: var(--axis); stroke-width: 1; }
+svg .line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+svg .dot { stroke: var(--surface); stroke-width: 2; }
+svg .cross { stroke: var(--axis); stroke-width: 1; }
+svg .ring { fill: none; stroke: var(--ink); stroke-width: 1.5; pointer-events: none; }
+svg .link { stroke: var(--axis); stroke-width: 2; }
+svg .hit { fill: transparent; }
+svg .hit:focus { outline: none; }
+svg .hit:focus-visible { fill: var(--accent-wash); opacity: .7; }
+svg .mark.hot { filter: brightness(1.14); }
+.hbars { display: grid; gap: 2px; }
+.hb-row { display: grid; grid-template-columns: minmax(96px, 38%) minmax(0, 1fr); gap: 10px; align-items: center; min-height: 30px; padding: 0 4px; border-radius: 6px; }
+.hb-row:hover, .hb-row:focus-visible { background: var(--surface2); }
+.hb-row.click { cursor: pointer; }
+.hb-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.hb-track { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.hb-bar { height: 16px; border-radius: 0 4px 4px 0; min-width: 3px; flex: 0 0 auto; }
+.hb-val { font-size: 12.5px; color: var(--ink2); font-variant-numeric: tabular-nums; }
+.tilemap-wrap { display: grid; justify-items: start; }
+.tile rect { fill: var(--surface2); }
+.tile text { font: 600 11px var(--sans); fill: var(--ink3); pointer-events: none; }
+.tile.b1 rect { fill: var(--seq1); } .tile.b1 text { fill: var(--seq1-ink); }
+.tile.b2 rect { fill: var(--seq2); } .tile.b2 text { fill: var(--seq2-ink); }
+.tile.b3 rect { fill: var(--seq3); } .tile.b3 text { fill: var(--seq3-ink); }
+.tile.b4 rect { fill: var(--seq4); } .tile.b4 text { fill: var(--seq4-ink); }
+.tile.b5 rect { fill: var(--seq5); } .tile.b5 text { fill: var(--seq5-ink); }
+.tile.click { cursor: pointer; }
+.tile:hover rect, .tile:focus-visible rect { stroke: var(--ink); stroke-width: 1.5; }
+.tile:focus { outline: none; }
+.scale { display: flex; gap: 4px; align-items: center; font-size: 12px; color: var(--ink2); margin-top: 10px; }
+.scale span:first-child { margin-right: 4px; }
+.sw { width: 20px; height: 10px; border-radius: 2px; display: inline-block; }
+.sw.b1 { background: var(--seq1); } .sw.b2 { background: var(--seq2); } .sw.b3 { background: var(--seq3); } .sw.b4 { background: var(--seq4); } .sw.b5 { background: var(--seq5); }
+.segbar { display: flex; gap: 2px; height: 28px; }
+.seg { display: flex; align-items: center; padding: 0 0 0 8px; font-size: 12px; font-weight: 600; border-radius: 4px; min-width: 3px; white-space: nowrap; overflow: visible; }
+.seg.click { cursor: pointer; }
+.seg:hover, .seg:focus-visible { filter: brightness(1.12); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; padding-top: 12px; font-size: 12.5px; color: var(--ink2); }
+.legend.flush { padding-top: 10px; }
+.lg i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.tip { position: fixed; z-index: 120; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font-size: 12.5px; box-shadow: var(--shadow); max-width: 280px; }
+.tip-title { color: var(--ink2); margin-bottom: 4px; }
+.tip-row { display: flex; gap: 8px; align-items: center; }
+.tip-row strong { font-size: 14px; font-weight: 600; }
+.tip-row span { color: var(--ink2); }
+.tip-key { display: inline-block; width: 12px; height: 3px; border-radius: 2px; }
+
+/* ---------- Drawer ---------- */
+.scrim { position: fixed; inset: 0; background: rgba(11, 13, 16, .4); z-index: 50; opacity: 0; pointer-events: none; transition: opacity .18s; }
+.scrim.on { opacity: 1; pointer-events: auto; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(440px, 100vw); background: var(--surface); border-left: 1px solid var(--line); box-shadow: var(--shadow); transform: translateX(102%); transition: transform .2s ease; z-index: 60; overflow: auto; padding: 22px 22px 40px; }
+.drawer.open { transform: none; }
+.drawer h2 { font-family: var(--serif); font-size: 22px; font-weight: 600; margin-bottom: 14px; }
+.field { display: grid; gap: 6px; margin: 18px 0; }
+.field > label, .field > .lab { font-weight: 600; }
+.field .hint { color: var(--ink2); font-size: 12.5px; }
+.radios { display: flex; gap: 6px; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) {
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .g3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 960px) {
+  .g2, .g21, .g3 { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 860px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .rail { position: fixed; left: 0; top: 0; bottom: 0; width: 280px; transform: translateX(-102%); transition: transform .2s ease; box-shadow: var(--shadow); }
+  .rail.open { transform: none; }
+  .menu-btn { display: inline-flex; }
+  .topbar { padding: 10px 14px; }
+  .page { padding: 20px 16px 80px; }
+  .hero .big { font-size: 52px; }
+  .row { grid-template-columns: 30px minmax(0, 1fr); }
+  .row.nostar { grid-template-columns: minmax(0, 1fr); }
+  .row-side { grid-column: 2; flex-direction: row; align-items: center; justify-content: space-between; text-align: left; }
+  .row.nostar .row-side { grid-column: 1; }
+  .cols2 { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .stats { grid-template-columns: minmax(0, 1fr); }
+  .pagehead h1 { font-size: 26px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+@media print {
+  .rail, .topbar, .toolbar, .togglebar, .more, .card-tools { display: none !important; }
+  .app { display: block; }
+  body { background: #fff; }
+}
+
+/* two-step workbook update (used in the settings drawer and the stale-copy banner) */
+.steps { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.steps .hint { flex-basis: 100%; margin: 2px 0 0; }
+.drawer .steps { flex-direction: column; flex-wrap: nowrap; align-items: flex-start; }
+.drawer .steps .hint { flex-basis: auto; }
+label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outline-offset: 2px; }
+
+@media (max-width: 860px) { .hide-sm { display: none !important; } }
+
+.setup .hint { color: var(--ink3); font-size: 12.5px; margin: 6px 0 0; }
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<noscript>Faculty Market Atlas needs JavaScript to run.</noscript>
+<script id="snapshot" type="text/plain"></script>
+<script>
+/* ============================================================
+   Faculty Market Atlas - utilities
+   Everything lives on one namespace, A. No external libraries.
+   All sheet content is untrusted (anonymous editors), so the UI
+   is built with DOM nodes and textContent, never innerHTML.
+   ============================================================ */
+(function () {
+  const A = (globalThis.A = globalThis.A || {});
+
+  /* ---------- DOM helpers ---------- */
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  function applyAttrs(el, attrs) {
+    if (!attrs) return;
+    for (const k of Object.keys(attrs)) {
+      const v = attrs[k];
+      if (v === null || v === undefined || v === false) continue;
+      if (k === 'class') el.setAttribute('class', v);
+      else if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
+      else if (k === 'dataset') Object.assign(el.dataset, v);
+      else if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2).toLowerCase(), v);
+      else if (v === true) el.setAttribute(k, '');
+      else el.setAttribute(k, String(v));
+    }
+  }
+  function append(el, kids) {
+    for (const k of kids) {
+      if (k === null || k === undefined || k === false) continue;
+      if (Array.isArray(k)) append(el, k);
+      else if (k instanceof Node) el.appendChild(k);
+      else el.appendChild(document.createTextNode(String(k)));
+    }
+  }
+  A.h = function (tag, attrs, ...kids) {
+    const el = document.createElement(tag);
+    applyAttrs(el, attrs);
+    append(el, kids);
+    return el;
+  };
+  A.s = function (tag, attrs, ...kids) {
+    const el = document.createElementNS(SVGNS, tag);
+    applyAttrs(el, attrs);
+    append(el, kids);
+    return el;
+  };
+  A.clear = function (el) { while (el.firstChild) el.removeChild(el.firstChild); return el; };
+
+  /* ---------- Safe links and rich text ---------- */
+  A.safeUrl = function (u) {
+    u = String(u || '').trim();
+    if (!u) return '';
+    if (/^https?:\/\//i.test(u)) return u;
+    if (/^mailto:/i.test(u)) return u;
+    if (/^www\./i.test(u)) return 'https://' + u;
+    if (/^[a-z0-9-]+(\.[a-z0-9-]+)+\/\S+/i.test(u)) return 'https://' + u; // apply.interfolio.com/123
+    return '';
+  };
+  A.host = function (u) {
+    try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return ''; }
+  };
+  A.shortUrl = function (u, max) {
+    max = max || 46;
+    let s = String(u).replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '');
+    return s.length > max ? s.slice(0, max - 1) + '…' : s;
+  };
+  A.link = function (url, label, cls) {
+    const href = A.safeUrl(url);
+    if (!href) return A.h('span', { class: cls }, label || url);
+    return A.h('a', { href, target: '_blank', rel: 'noopener noreferrer', class: cls || 'ext' }, label || A.shortUrl(href));
+  };
+  const URL_RE = /(?:https?:\/\/|www\.)[^\s<>"]+/gi;
+  function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  A.termsRe = function (terms) {
+    terms = (terms || []).filter(t => t && t.length > 1);
+    if (!terms.length) return null;
+    return new RegExp('(' + terms.map(escRe).join('|') + ')', 'gi');
+  };
+  function hlText(text, re) {
+    if (!re) return [document.createTextNode(text)];
+    const out = []; let last = 0; let m;
+    re.lastIndex = 0;
+    while ((m = re.exec(text))) {
+      if (m.index > last) out.push(document.createTextNode(text.slice(last, m.index)));
+      out.push(A.h('mark', null, m[0]));
+      last = m.index + m[0].length;
+      if (m[0].length === 0) re.lastIndex++;
+    }
+    if (last < text.length) out.push(document.createTextNode(text.slice(last)));
+    return out;
+  }
+  /* Turns plain text into a fragment: URLs become links, search terms are marked. */
+  A.rich = function (text, termsRe) {
+    const frag = document.createDocumentFragment();
+    text = String(text == null ? '' : text);
+    let last = 0; let m;
+    URL_RE.lastIndex = 0;
+    while ((m = URL_RE.exec(text))) {
+      let url = m[0];
+      const trail = url.match(/[.,;:!?)\]}'"]+$/);
+      if (trail) url = url.slice(0, -trail[0].length);
+      if (m.index > last) hlText(text.slice(last, m.index), termsRe).forEach(n => frag.appendChild(n));
+      frag.appendChild(A.link(url, A.shortUrl(url, 56)));
+      last = m.index + url.length;
+      URL_RE.lastIndex = last;
+    }
+    if (last < text.length) hlText(text.slice(last), termsRe).forEach(n => frag.appendChild(n));
+    return frag;
+  };
+
+  /* ---------- Strings and numbers ---------- */
+  A.clean = s => String(s == null ? '' : s).replace(/ /g, ' ').replace(/[ \t]+/g, ' ').trim();
+  A.norm = s => A.clean(s).toLowerCase();
+  A.n = x => (x === null || x === undefined || isNaN(x)) ? '–' : Number(x).toLocaleString('en-US');
+  A.pct = (x, d) => (x === null || x === undefined || isNaN(x)) ? '–' : (x * 100).toFixed(d === undefined ? 0 : d) + '%';
+  A.plural = (n, one, many) => n + ' ' + (n === 1 ? one : (many || one + 's'));
+  A.sum = a => a.reduce((x, y) => x + y, 0);
+  A.quantile = function (arr, q) {
+    const a = arr.filter(x => typeof x === 'number' && !isNaN(x)).sort((x, y) => x - y);
+    if (!a.length) return null;
+    const p = (a.length - 1) * q, lo = Math.floor(p), hi = Math.ceil(p);
+    return a[lo] + (a[hi] - a[lo]) * (p - lo);
+  };
+  A.median = arr => A.quantile(arr, 0.5);
+  A.count = function (items, keyFn) {
+    const m = new Map();
+    for (const it of items) {
+      const k = keyFn(it);
+      if (k === null || k === undefined || k === '') continue;
+      m.set(k, (m.get(k) || 0) + 1);
+    }
+    return m;
+  };
+  A.top = (map, n) => [...map.entries()].sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0]))).slice(0, n);
+  A.compact = function (v) {
+    if (v >= 1e6) return (v / 1e6).toFixed(v % 1e6 === 0 ? 0 : 1).replace(/\.0$/, '') + 'M';
+    if (v >= 1e4) return Math.round(v / 1e3) + 'K';
+    return Number(v).toLocaleString('en-US');
+  };
+  A.money = function (v) {
+    if (v === null || v === undefined) return '–';
+    if (v >= 1e6) return '$' + (v / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'M';
+    if (v >= 1e3) return '$' + (v / 1e3).toFixed(1).replace(/\.0$/, '') + 'K';
+    return '$' + v;
+  };
+  /* "$135K", "136.5k", "1.7M", "1 M excluding salary", "13.65k + 13.65k bonus" -> first amount */
+  A.parseMoney = function (s) {
+    s = String(s || '').replace(/,/g, '');
+    const m = s.match(/(\d+(?:\.\d+)?)\s*(million|thousand|k|m)?(?![a-z])/i);
+    if (!m) return null;
+    const n = parseFloat(m[1]);
+    const u = (m[2] || '').toLowerCase();
+    if (u === 'k' || u === 'thousand') return n * 1e3;
+    if (u === 'm' || u === 'million') return n * 1e6;
+    return n >= 1000 ? n : null;
+  };
+  A.firstNumber = function (s) {
+    const m = String(s || '').replace(/,/g, '').match(/\d+(?:\.\d+)?/);
+    return m ? parseFloat(m[0]) : null;
+  };
+
+  /* ---------- Dates (UTC milliseconds, or null) ---------- */
+  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  A.MON = MON;
+  function mk(y, mo, d) {
+    if (!(y >= 2000 && y <= 2100 && mo >= 1 && mo <= 12 && d >= 1 && d <= 31)) return null;
+    const t = Date.UTC(y, mo - 1, d);
+    return new Date(t).getUTCMonth() === mo - 1 ? t : null;
+  }
+  A.parseDate = function (s) {
+    s = A.clean(s);
+    if (!s) return null;
+    let m;
+    if ((m = s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})(?!\d)/))) return mk(+m[1], +m[2], +m[3]);
+    if ((m = s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})(?!\d)/))) {
+      let a = +m[1], b = +m[2], y = +m[3];
+      if (y < 100) y += 2000;
+      if (a > 12 && b <= 12) return mk(y, b, a);   // day first
+      return mk(y, a, b);                          // month first (US)
+    }
+    if ((m = s.match(/^(\d{4})[-\/.](\d{1,2})$/))) return mk(+m[1], +m[2], 1);
+    if ((m = s.match(/^(\d{1,2})[-\/.](\d{4})$/))) return mk(+m[2], +m[1], 1);
+    if (/[a-z]{3}/i.test(s) && /\d{4}/.test(s)) {
+      const t = Date.parse(s + (/utc|gmt|z$/i.test(s) ? '' : ' UTC'));
+      if (!isNaN(t)) { const d = new Date(t); return mk(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate()); }
+    }
+    return null;
+  };
+  A.DAY = 86400000;
+  A.today = function () { const d = new Date(); return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()); };
+  A.fmtDate = function (t, withYear) {
+    if (t === null || t === undefined) return '';
+    const d = new Date(t);
+    return d.getUTCDate() + ' ' + MON[d.getUTCMonth()] + (withYear === false ? '' : ' ' + d.getUTCFullYear());
+  };
+  A.fmtMonth = t => { const d = new Date(t); return MON[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); };
+  A.weekStart = function (t) { const d = new Date(t); const dow = (d.getUTCDay() + 6) % 7; return t - dow * A.DAY; };
+  A.monthStart = t => { const d = new Date(t); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1); };
+  A.ago = function (ts) {
+    const s = Math.max(0, (Date.now() - ts) / 1000);
+    if (s < 90) return 'just now';
+    if (s < 3600) return Math.round(s / 60) + ' min ago';
+    if (s < 86400) return Math.round(s / 3600) + ' h ago';
+    return Math.round(s / 86400) + ' d ago';
+  };
+  A.stamp = function (ts) {
+    const d = new Date(ts);
+    return d.getDate() + ' ' + MON[d.getMonth()] + ' ' + d.getFullYear() + ', ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  };
+  /* A plausible window for time series: ignore stray old or future typos. */
+  A.window = function (times) {
+    const t = times.filter(x => x !== null && x !== undefined).sort((a, b) => a - b);
+    if (!t.length) return null;
+    const lo = t[Math.min(t.length - 1, Math.floor(t.length * 0.02))] - 60 * A.DAY;
+    const hi = A.today() + 2 * A.DAY;
+    return { lo, hi };
+  };
+
+  /* ---------- US states ---------- */
+  A.STATES = { AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California', CO: 'Colorado', CT: 'Connecticut', DE: 'Delaware', DC: 'District of Columbia', FL: 'Florida', GA: 'Georgia', HI: 'Hawaii', ID: 'Idaho', IL: 'Illinois', IN: 'Indiana', IA: 'Iowa', KS: 'Kansas', KY: 'Kentucky', LA: 'Louisiana', ME: 'Maine', MD: 'Maryland', MA: 'Massachusetts', MI: 'Michigan', MN: 'Minnesota', MS: 'Mississippi', MO: 'Missouri', MT: 'Montana', NE: 'Nebraska', NV: 'Nevada', NH: 'New Hampshire', NJ: 'New Jersey', NM: 'New Mexico', NY: 'New York', NC: 'North Carolina', ND: 'North Dakota', OH: 'Ohio', OK: 'Oklahoma', OR: 'Oregon', PA: 'Pennsylvania', RI: 'Rhode Island', SC: 'South Carolina', SD: 'South Dakota', TN: 'Tennessee', TX: 'Texas', UT: 'Utah', VT: 'Vermont', VA: 'Virginia', WA: 'Washington', WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming' };
+  const NAME2ABBR = {};
+  for (const k of Object.keys(A.STATES)) NAME2ABBR[A.STATES[k].toLowerCase()] = k;
+  A.stateOf = function (loc) {
+    loc = A.clean(loc);
+    if (!loc) return null;
+    let m = loc.match(/,\s*([A-Za-z.]{2,}(?:\s[A-Za-z]+)*)\s*(?:\d{5}(?:-\d{4})?)?\s*$/);
+    if (m) {
+      const t = m[1].replace(/\./g, '').trim();
+      if (/^[A-Za-z]{2}$/.test(t) && A.STATES[t.toUpperCase()]) return t.toUpperCase();
+      if (NAME2ABBR[t.toLowerCase()]) return NAME2ABBR[t.toLowerCase()];
+    }
+    m = loc.match(/\b([A-Z]{2})\b\s*(?:\d{5})?\s*$/);
+    if (m && A.STATES[m[1]]) return m[1];
+    if (/washington,?\s*d\.?c/i.test(loc)) return 'DC';
+    return null;
+  };
+
+  /* ---------- Fields and ranks (free text -> buckets) ---------- */
+  const FIELD_RULES = [
+    ['Microbiology & immunology', /micro(bio)?|immun|infect|pathogen|virolog|bacteri|parasit|host.?microbe|epidemi/i],
+    ['Neuroscience', /neuro|brain|cognit/i],
+    ['Cancer biology', /cancer|oncolog|tumor/i],
+    ['Genetics, genomics & computation', /genom|genetic|bioinformat|comput|data science|machine learning|quantitative|systems bio|biostat|statistic/i],
+    ['Biochemistry & molecular biology', /biochem|molecular|structur|chemical bio|protein|biophys/i],
+    ['Cell & developmental biology', /\bcell\b|cellular|develop|stem|regenerat/i],
+    ['Physiology & pharmacology', /physiolog|pharmac|toxic|endocrin|metabol|cardio|nutrition|kinesiol|exercise|anatomy/i],
+    ['Ecology, evolution & environment', /ecolog|evolution|marine|environment|plant|botan|zoolog|conservation|fisher|wildlife|ocean|geolog|earth|agricult/i],
+    ['Chemistry', /chem/i],
+    ['Engineering', /engineer|biomaterial|biomedical|bioengineer|device|imaging/i],
+    ['Physics & mathematics', /physic|math/i],
+    ['Psychology & behavior', /psych|behavio|social|educat/i],
+    ['General biology', /biolog|life science|biomedical sci|natural sci|science/i],
+  ];
+  A.fieldBucket = function (s) {
+    s = A.clean(s);
+    if (!s) return 'Not stated';
+    for (const [name, re] of FIELD_RULES) if (re.test(s)) return name;
+    return 'Other';
+  };
+  A.rankBucket = function (s) {
+    s = A.norm(s);
+    if (!s) return 'Not stated';
+    if (/lectur|instructor|teaching|clinical|research (professor|track|scientist)|staff/.test(s)) return 'Lecturer / non-tenure-track';
+    if (/assistant.*(or|\/|,).*associate|assistant.*associate/.test(s)) return 'Assistant or associate';
+    if (/open/.test(s)) return 'Open rank';
+    if (/assistant|tenure.track|\btt\b|ttap/.test(s)) return 'Assistant professor';
+    if (/associate|full professor|chair|director/.test(s)) return 'Associate / full / chair';
+    return 'Other';
+  };
+  A.responseKind = function (s) {
+    s = A.norm(s);
+    if (!s) return 'No response logged';
+    if (/verbal/.test(s)) return 'Offer';
+    if (/offer/.test(s)) return 'Offer';
+    if (/reject|declin|not selected|unsuccess/.test(s)) return 'Rejection';
+    if (/reference|letter/.test(s)) return 'Reference letters requested';
+    if (/remote|zoom|phone|virtual|video|screen/.test(s)) return 'Remote interview';
+    if (/onsite|on-site|visit|campus|offsite|in.person|2nd|second/.test(s)) return 'Onsite interview';
+    return 'Other';
+  };
+
+  /* ---------- Small utilities ---------- */
+  A.debounce = function (fn, ms) { let t; return function (...a) { clearTimeout(t); t = setTimeout(() => fn.apply(this, a), ms); }; };
+  A.store = {
+    get(k, d) { try { const v = localStorage.getItem('fma.' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem('fma.' + k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } },
+    del(k) { try { localStorage.removeItem('fma.' + k); } catch (e) { /* ignore */ } },
+  };
+  /* Tiny key-value store on IndexedDB for the cached workbook. */
+  A.idb = (function () {
+    let dbp;
+    function open() {
+      if (dbp) return dbp;
+      dbp = new Promise((res, rej) => {
+        try {
+          const rq = indexedDB.open('fma-atlas', 1);
+          rq.onupgradeneeded = () => rq.result.createObjectStore('kv');
+          rq.onsuccess = () => res(rq.result);
+          rq.onerror = () => rej(rq.error);
+        } catch (e) { rej(e); }
+      });
+      return dbp;
+    }
+    function tx(mode, fn) {
+      return open().then(db => new Promise((res, rej) => {
+        const t = db.transaction('kv', mode); const r = fn(t.objectStore('kv'));
+        t.oncomplete = () => res(r && r.result); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+      }));
+    }
+    return {
+      get: k => tx('readonly', s => s.get(k)).catch(() => undefined),
+      set: (k, v) => tx('readwrite', s => s.put(v, k)).catch(() => undefined),
+      del: k => tx('readwrite', s => s.delete(k)).catch(() => undefined),
+    };
+  })();
+})();
+
+/* ============================================================
+   Minimal .xlsx reader (zip + XML), dependency free.
+   Returns every tab as a grid of strings plus hyperlink targets,
+   which a CSV export would lose.
+   ============================================================ */
+(function () {
+  const A = (globalThis.A = globalThis.A || {});
+  const td = new TextDecoder('utf-8');
+
+  async function inflateRaw(u8) {
+    const stream = new Blob([u8]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+
+  function readZip(buf) {
+    const dv = new DataView(buf), u8 = new Uint8Array(buf);
+    let eocd = -1;
+    for (let i = buf.byteLength - 22; i >= Math.max(0, buf.byteLength - 65557); i--) {
+      if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+    }
+    if (eocd < 0) throw new Error('This file is not a valid .xlsx workbook.');
+    const n = dv.getUint16(eocd + 10, true);
+    let p = dv.getUint32(eocd + 16, true);
+    const map = new Map();
+    for (let i = 0; i < n; i++) {
+      if (dv.getUint32(p, true) !== 0x02014b50) break;
+      const method = dv.getUint16(p + 10, true);
+      const csize = dv.getUint32(p + 20, true);
+      const nl = dv.getUint16(p + 28, true), el = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true);
+      const lho = dv.getUint32(p + 42, true);
+      map.set(td.decode(u8.subarray(p + 46, p + 46 + nl)), { method, csize, lho });
+      p += 46 + nl + el + cl;
+    }
+    async function read(name) {
+      const e = map.get(name);
+      if (!e) return null;
+      const nl = dv.getUint16(e.lho + 26, true), el = dv.getUint16(e.lho + 28, true);
+      const start = e.lho + 30 + nl + el;
+      const data = u8.subarray(start, start + e.csize);
+      if (e.method === 0) return data;
+      if (e.method === 8) return inflateRaw(data);
+      throw new Error('Unsupported zip compression method ' + e.method);
+    }
+    return { names: [...map.keys()], async text(name) { const d = await read(name); return d ? td.decode(d) : null; } };
+  }
+
+  /* ---------- XML helpers ---------- */
+  const ENT = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" };
+  function unx(s) {
+    if (s.indexOf('&') >= 0) {
+      s = s.replace(/&(#x[0-9a-f]+|#\d+|amp|lt|gt|quot|apos);/gi, (m, e) => {
+        if (e[0] === '#') {
+          const cp = e[1].toLowerCase() === 'x' ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
+          try { return String.fromCodePoint(cp); } catch (err) { return ''; }
+        }
+        return ENT[e.toLowerCase()];
+      });
+    }
+    if (s.indexOf('_x') >= 0) s = s.replace(/_x([0-9A-Fa-f]{4})_/g, (m, h) => (h === '000D' ? '' : String.fromCharCode(parseInt(h, 16))));
+    return s;
+  }
+  function attrs(s) {
+    const o = {};
+    s.replace(/([\w:.-]+)\s*=\s*"([^"]*)"/g, (m, k, v) => { o[k] = v; return m; });
+    return o;
+  }
+  function colIdx(ref) {
+    let n = 0;
+    for (let i = 0; i < ref.length; i++) {
+      const c = ref.charCodeAt(i);
+      if (c >= 65 && c <= 90) n = n * 26 + (c - 64); else break;
+    }
+    return n - 1;
+  }
+  function cellRef(ref) {
+    const m = String(ref).match(/^([A-Z]+)(\d+)$/);
+    return m ? { c: colIdx(m[1]), r: +m[2] - 1 } : null;
+  }
+
+  function parseShared(xml) {
+    const out = [];
+    const re = /<si\b[^>]*?(?:\/>|>([\s\S]*?)<\/si>)/g;
+    let m;
+    while ((m = re.exec(xml))) {
+      let body = m[1] || '';
+      if (body.indexOf('<rPh') >= 0) body = body.replace(/<rPh\b[\s\S]*?<\/rPh>/g, '');
+      let s = '';
+      const tr = /<t\b[^>]*?(?:\/>|>([\s\S]*?)<\/t>)/g;
+      let t;
+      while ((t = tr.exec(body))) s += t[1] || '';
+      out.push(unx(s));
+    }
+    return out;
+  }
+
+  function isDateFmt(id, code) {
+    if ((id >= 14 && id <= 22) || (id >= 27 && id <= 36) || (id >= 45 && id <= 47) || (id >= 50 && id <= 58)) return true;
+    if (!code) return false;
+    const c = code.replace(/"[^"]*"/g, '').replace(/\[[^\]]*\]/g, '').replace(/\\./g, '');
+    return /[ymd]/i.test(c);
+  }
+  function parseStyles(xml) {
+    const fmts = {};
+    (xml.match(/<numFmt\b[^>]*>/g) || []).forEach(t => { const a = attrs(t); fmts[a.numFmtId] = unx(a.formatCode || ''); });
+    const blk = (xml.match(/<cellXfs\b[\s\S]*?<\/cellXfs>/) || [''])[0];
+    return (blk.match(/<xf\b[^>]*>/g) || []).map(t => { const id = +attrs(t).numFmtId || 0; return isDateFmt(id, fmts[id]); });
+  }
+
+  function parseRels(xml) {
+    const o = {};
+    (xml.match(/<Relationship\b[^>]*>/g) || []).forEach(t => { const a = attrs(t); if (a.Id) o[a.Id] = unx(a.Target || ''); });
+    return o;
+  }
+
+  function parseSheet(xml, shared, dateStyle, rels) {
+    const sparse = [];
+    let maxCol = 0, lastRow = -1;
+    const rowRe = /<row\b([^>]*?)(?:\/>|>([\s\S]*?)<\/row>)/g;
+    let rm;
+    while ((rm = rowRe.exec(xml))) {
+      const body = rm[2];
+      if (!body) continue;
+      const ra = attrs(rm[1]);
+      const ri = (+ra.r || sparse.length + 1) - 1;
+      const row = [];
+      const cRe = /<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g;
+      let cm, any = false;
+      while ((cm = cRe.exec(body))) {
+        const inner = cm[2];
+        if (!inner) continue;
+        const ca = attrs(cm[1]);
+        const ci = colIdx(ca.r || '');
+        if (ci < 0) continue;
+        let val = '';
+        if (ca.t === 'inlineStr') {
+          const tr = /<t\b[^>]*>([\s\S]*?)<\/t>/g; let t;
+          while ((t = tr.exec(inner))) val += t[1];
+          val = unx(val);
+        } else {
+          const vm = inner.match(/<v>([\s\S]*?)<\/v>/);
+          if (!vm) continue;
+          const v = vm[1];
+          if (ca.t === 's') val = shared[+v] || '';
+          else if (ca.t === 'str') val = unx(v);
+          else if (ca.t === 'b') val = v === '1' ? 'TRUE' : 'FALSE';
+          else if (ca.t === 'e') val = '';
+          else {
+            const n = +v;
+            if (isNaN(n)) val = v;
+            else if (dateStyle[+ca.s] && n >= 36526 && n < 80000) val = new Date(Math.round((n - 25569) * 864e5)).toISOString().slice(0, 10);
+            else val = Number.isInteger(n) ? String(n) : String(+n.toPrecision(12));
+          }
+        }
+        if (val === '') continue;
+        row[ci] = val; any = true;
+        if (ci > maxCol) maxCol = ci;
+      }
+      if (any) { sparse[ri] = row; if (ri > lastRow) lastRow = ri; }
+    }
+    const rows = [];
+    for (let r = 0; r <= lastRow; r++) {
+      const src = sparse[r]; const row = new Array(maxCol + 1);
+      for (let c = 0; c <= maxCol; c++) row[c] = (src && src[c]) || '';
+      rows.push(row);
+    }
+    const links = {};
+    const hl = xml.match(/<hyperlinks>[\s\S]*?<\/hyperlinks>/);
+    if (hl) {
+      (hl[0].match(/<hyperlink\b[^>]*>/g) || []).forEach(tag => {
+        const a = attrs(tag);
+        const target = rels[a['r:id']];
+        if (!target || !/^(https?:|mailto:)/i.test(target) || !a.ref) return;
+        const ref = cellRef(a.ref.split(':')[0]);
+        if (ref) links[ref.r + ',' + ref.c] = target;
+      });
+    }
+    return { rows, links };
+  }
+
+  /* Parse a whole workbook. onProgress(done, total, name) is optional. */
+  A.parseXlsx = async function (buf, onProgress) {
+    const zip = readZip(buf);
+    const wbXml = await zip.text('xl/workbook.xml');
+    if (!wbXml) throw new Error('This file does not look like an Excel workbook.');
+    const wbRels = parseRels(await zip.text('xl/_rels/workbook.xml.rels') || '');
+    const shared = parseShared(await zip.text('xl/sharedStrings.xml') || '');
+    const dateStyle = parseStyles(await zip.text('xl/styles.xml') || '');
+    const sheetTags = wbXml.match(/<sheet\b[^>]*>/g) || [];
+    const sheets = [];
+    let done = 0;
+    for (const tag of sheetTags) {
+      const a = attrs(tag);
+      let target = wbRels[a['r:id']] || '';
+      target = target.charAt(0) === '/' ? target.slice(1) : 'xl/' + target;
+      const xml = await zip.text(target);
+      const name = unx(a.name || '');
+      if (xml) {
+        const relName = target.replace(/([^/]+)$/, '_rels/$1.rels');
+        const rels = parseRels(await zip.text(relName) || '');
+        const { rows, links } = parseSheet(xml, shared, dateStyle, rels);
+        sheets.push({ name, rows, links });
+      }
+      done++;
+      if (onProgress) onProgress(done, sheetTags.length, name);
+      await new Promise(r => setTimeout(r, 0)); // let the UI breathe between tabs
+    }
+    return { sheets };
+  };
+
+  /* Snapshot: parsed workbook as gzip+base64 (built into the file so the app opens offline). */
+  A.unpackSnapshot = async function (b64) {
+    const bin = atob(b64);
+    const u8 = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    const stream = new Blob([u8]).stream().pipeThrough(new DecompressionStream('gzip'));
+    return JSON.parse(await new Response(stream).text());
+  };
+})();
+
+/* ============================================================
+   Data layer: tab grids -> clean records.
+   Columns are found by header wording, not position, so the
+   app keeps working when editors add or move columns.
+   ============================================================ */
+(function () {
+  const A = (globalThis.A = globalThis.A || {});
+
+  function sheetsByNumber(sheets) {
+    const m = {};
+    for (const s of sheets) {
+      const mm = s.name.match(/^\s*\((\d+)\)/);
+      if (mm) m[+mm[1]] = s;
+      else if (/welcome/i.test(s.name)) m[0] = s;
+    }
+    return m;
+  }
+
+  /* Find the header row, map named fields to columns, return one record per data row. */
+  function mapTable(sheet, spec, warnings) {
+    const rows = sheet.rows;
+    let hi = -1;
+    for (let i = 0; i < Math.min(rows.length, 8); i++) {
+      const joined = rows[i].map(A.norm).join(' | ').replace(/\s+/g, ' ');
+      if (spec.header.every(re => re.test(joined))) { hi = i; break; }
+    }
+    if (hi < 0) {
+      warnings.push('Could not find the header row in "' + sheet.name.trim() + '". That tab was skipped.');
+      return { records: [], cols: {} };
+    }
+    const head = rows[hi].map(c => A.norm(c).replace(/\s+/g, ' '));
+    const cols = {}, used = new Set();
+    for (const [key, re] of spec.fields) {
+      const idx = head.findIndex((h, i) => !used.has(i) && re.test(h));
+      if (idx >= 0) { cols[key] = idx; used.add(idx); }
+    }
+    for (const key of Object.keys(spec.fallback || {})) {
+      const idx = spec.fallback[key];
+      if (cols[key] === undefined && !used.has(idx)) { cols[key] = idx; used.add(idx); }
+    }
+    const multi = [];
+    if (spec.multi) head.forEach((h, i) => { if (!used.has(i) && spec.multi.test(h)) multi.push(i); });
+    if (spec.multiAfter && cols[spec.multiAfter] !== undefined) {
+      for (let i = cols[spec.multiAfter] + 1; i < head.length; i++) if (!used.has(i) && !multi.includes(i)) multi.push(i);
+    }
+    const records = [];
+    for (let r = hi + 1; r < rows.length; r++) {
+      const row = rows[r];
+      const rec = { id: spec.id + ':' + r, row: r, cellLinks: {} };
+      let any = false;
+      for (const key of Object.keys(cols)) {
+        rec[key] = A.clean(row[cols[key]]);
+        if (rec[key]) any = true;
+        const l = sheet.links[r + ',' + cols[key]];
+        if (l) rec.cellLinks[key] = l;
+      }
+      rec.notes = [];
+      for (const i of multi) {
+        const v = A.clean(row[i]);
+        if (v) { rec.notes.push(v); any = true; }
+        const l = sheet.links[r + ',' + i];
+        if (l) rec.cellLinks['note' + i] = l;
+      }
+      if (any) records.push(rec);
+    }
+    return { records, cols, headRow: hi };
+  }
+
+  function textOf(parts) { return parts.filter(Boolean).join(' • ').toLowerCase(); }
+  function linkOf(rec, key) { return A.safeUrl(rec.cellLinks[key]) || A.safeUrl(rec[key]) || ''; }
+
+  /* Prefer the specific field; fall back to the department when the discipline is generic. */
+  function fieldFor(discipline, department) {
+    const f = A.fieldBucket(discipline);
+    if (f === 'General biology' || f === 'Other' || f === 'Not stated') {
+      const g = A.fieldBucket(department);
+      if (g !== 'General biology' && g !== 'Other' && g !== 'Not stated') return g;
+    }
+    return f;
+  }
+
+  /* ---------- Per-tab normalisers ---------- */
+  function postings(sheet, w) {
+    const t = mapTable(sheet, {
+      id: 'post', header: [/date added/, /universit|institution/],
+      fields: [['date', /^date/], ['category', /categor/], ['university', /universit|institution/], ['department', /depart/], ['location', /locat/], ['discipline', /disciplin|special/], ['rank', /^rank|position/], ['link', /link|url/]],
+      multiAfter: 'link',
+    }, w);
+    return t.records.map(r => {
+      r.dateMs = A.parseDate(r.date);
+      r.url = linkOf(r, 'link');
+      r.state = A.stateOf(r.location);
+      r.field = fieldFor(r.discipline, r.department);
+      r.rankKind = A.rankBucket(r.rank);
+      r.categoryLabel = r.category || 'Not labelled';
+      r.text = textOf([r.university, r.department, r.location, r.discipline, r.rank, r.category, r.notes.join(' ')]);
+      return r;
+    }).filter(r => r.university || r.url);
+  }
+
+  function applications(sheet, w) {
+    const t = mapTable(sheet, {
+      id: 'app', header: [/institution/, /response/],
+      fields: [['responseDate', /response date/], ['response', /^response/], ['institution', /institution/], ['due', /^due/], ['submitted', /submitted/], ['position', /position/], ['specialty', /special/], ['department', /depart/], ['location', /locat/], ['note1', /part 1/], ['note2', /part 2/], ['jobAd', /job ad|url|\bid\b/]],
+      fallback: { date: 0 }, multiAfter: 'jobAd',
+    }, w);
+    return t.records.map(r => {
+      r.example = /last cycle/i.test(r.date);
+      r.addedMs = A.parseDate(r.date);
+      r.submittedMs = A.parseDate(r.submitted);
+      r.respondedMs = A.parseDate(r.responseDate);
+      r.dueMs = A.parseDate(r.due);
+      r.state = A.stateOf(r.location);
+      r.kind = A.responseKind(r.response);
+      r.rankKind = A.rankBucket(r.position);
+      r.field = fieldFor(r.specialty, r.department);
+      r.url = A.safeUrl(r.cellLinks.jobAd) || A.safeUrl(r.jobAd);
+      r.noteList = [r.note1, r.note2].concat(r.notes).filter(Boolean);
+      if (r.submittedMs && r.respondedMs) {
+        const d = Math.round((r.respondedMs - r.submittedMs) / A.DAY);
+        r.daysToResponse = d >= 0 && d <= 400 ? d : null;
+      } else r.daysToResponse = null;
+      r.text = textOf([r.institution, r.department, r.specialty, r.location, r.position, r.response, r.noteList.join(' ')]);
+      return r;
+    }).filter(r => r.institution && !r.example);
+  }
+
+  function applicantStats(sheet, w) {
+    const t = mapTable(sheet, {
+      id: 'stat', header: [/number of applications/],
+      fields: [['apps', /number of applications/], ['heard', /heard/], ['remote', /remote/], ['onsiteV', /virtual/], ['onsiteP', /in-person|campus/], ['unoff', /unofficial/], ['offRej', /official rejection/], ['offers', /^offers/], ['year', /year applying/], ['instType', /type of institution/], ['fellowship', /k99|fellowship|career development/], ['pubs', /cns|publication/], ['firstGen', /first generation|underrepresented/], ['discipline', /^discipline/], ['updated', /last updated/]],
+    }, w);
+    const out = [];
+    for (const r of t.records) {
+      const prev = sheet.rows[r.row - 1] || [];
+      const isExample = /example/i.test(prev[0] || '') || /example/i.test(r.apps);
+      const n = A.firstNumber(r.apps);
+      if (n === null || n <= 0) continue;
+      r.example = isExample;
+      r.appsNum = n;
+      r.ongoing = /ongoing|\+|~|\bso far\b/i.test(r.apps);
+      r.heardNum = A.firstNumber(r.heard) || 0;
+      r.remoteNum = A.firstNumber(r.remote) || 0;
+      r.onsiteVNum = A.firstNumber(r.onsiteV) || 0;
+      r.onsitePNum = A.firstNumber(r.onsiteP) || 0;
+      r.interviews = r.remoteNum + r.onsiteVNum + r.onsitePNum;
+      r.onsiteNum = r.onsiteVNum + r.onsitePNum;
+      r.offerNum = A.firstNumber(r.offers) || 0;
+      r.offRejNum = A.firstNumber(r.offRej) || 0;
+      r.unoffNum = A.firstNumber(r.unoff) || 0;
+      const y = A.firstNumber(r.year);
+      r.cycle = y === null ? 'Not stated' : (y < 1.5 ? '1st cycle' : (y < 2.5 ? '2nd cycle' : '3rd cycle or later'));
+      r.instTypes = [];
+      if (/\br1\b/i.test(r.instType)) r.instTypes.push('R1');
+      if (/\br2\b/i.test(r.instType)) r.instTypes.push('R2');
+      if (/pui|slac|liberal|undergrad/i.test(r.instType)) r.instTypes.push('PUI / SLAC');
+      if (/europe|asia|international|uk|canada/i.test(r.instType)) r.instTypes.push('International');
+      r.field = fieldFor(r.discipline, '');
+      r.text = textOf([r.discipline, r.instType, r.year, r.fellowship, r.pubs]);
+      out.push(r);
+    }
+    return out;
+  }
+
+  function negotiations(sheet, w) {
+    const t = mapTable(sheet, {
+      id: 'neg', header: [/salary/, /startup/],
+      fields: [['salaryOffered', /salary.*initial/], ['salaryAsked', /salary.*request/], ['salaryGranted', /salary.*grant/], ['salaryType', /salary type/], ['appointment', /appointment/], ['cost', /cost of living/], ['relocation', /relocation/], ['startupOffered', /startup.*initial/], ['startupAsked', /startup.*request/], ['startupGranted', /startup.*grant/], ['teaching', /teaching/], ['labType', /setting up|experimental|computational/], ['pubpriv', /public/], ['region', /region/], ['field', /field|discipline/], ['gender', /gender/], ['prior', /prior/], ['type', /^type/], ['date', /^date/]],
+      multi: /note|comment/,
+    }, w);
+    return t.records.map(r => {
+      r.dateMs = A.parseDate(r.date);
+      r.salaryOfferedNum = A.parseMoney(r.salaryOffered);
+      r.salaryAskedNum = A.parseMoney(r.salaryAsked);
+      r.salaryGrantedNum = A.parseMoney(r.salaryGranted);
+      r.startupOfferedNum = A.parseMoney(r.startupOffered);
+      r.startupAskedNum = A.parseMoney(r.startupAsked);
+      r.startupGrantedNum = A.parseMoney(r.startupGranted);
+      r.label = [r.type, r.field].filter(x => x && !/^\[/.test(x)).join(' – ') || 'Entry ' + (r.row);
+      r.text = textOf([r.type, r.field, r.region, r.prior, r.salaryType, r.notes.join(' '), r.labType]);
+      return r;
+    });
+  }
+
+  function offers(sheet, w) {
+    const t = mapTable(sheet, {
+      id: 'offer', header: [/institution/, /accepted|declined/],
+      fields: [['institution', /institution/], ['department', /depart/], ['position', /position/], ['location', /locat/], ['source', /source/], ['status', /accepted|declined/]],
+      fallback: { date: 0 }, multi: /comment/,
+    }, w);
+    return t.records.map(r => {
+      r.dateMs = A.parseDate(r.date);
+      r.lastCycle = /last/i.test(r.date);
+      r.url = A.safeUrl(r.cellLinks.source) || A.safeUrl(r.source);
+      r.state = A.stateOf(r.location);
+      r.text = textOf([r.institution, r.department, r.location, r.status, r.notes.join(' ')]);
+      return r;
+    }).filter(r => r.institution);
+  }
+
+  function noResponse(sheet, w) {
+    const t = mapTable(sheet, {
+      id: 'nores', header: [/institution/, /deadline/],
+      fields: [['date', /^date/], ['institution', /institution/], ['deadline', /deadline/], ['department', /depart/], ['rank', /^rank/], ['location', /locat/], ['jobAd', /job ad|url/]],
+      multi: /note|comment/,
+    }, w);
+    return t.records.map(r => {
+      r.dateMs = A.parseDate(r.date);
+      r.deadlineMs = A.parseDate(r.deadline);
+      r.state = A.stateOf(r.location);
+      r.url = A.safeUrl(r.cellLinks.jobAd) || A.safeUrl(r.jobAd);
+      r.text = textOf([r.institution, r.department, r.location, r.rank, r.notes.join(' ')]);
+      return r;
+    }).filter(r => r.institution);
+  }
+
+  function culture(sheet, w) {
+    const t = mapTable(sheet, {
+      id: 'cult', header: [/institution/, /question/],
+      fields: [['date', /date/], ['institution', /institution/], ['department', /depart/], ['question', /^question/]],
+      multi: /^response|answer|comment/,
+    }, w);
+    return t.records.map(r => {
+      r.dateMs = A.parseDate(r.date);
+      r.text = textOf([r.institution, r.department, r.question, r.notes.join(' ')]);
+      return r;
+    }).filter(r => r.institution || r.question);
+  }
+
+  function locations(sheet, w) {
+    const t = mapTable(sheet, {
+      id: 'loc', header: [/city/, /pros/],
+      fields: [['city', /city|area/], ['question', /question/], ['pros', /pros/], ['cons', /cons/]],
+      multi: /answer|note/,
+    }, w);
+    return t.records.map(r => {
+      r.state = A.stateOf(r.city);
+      r.answered = !!(r.pros || r.cons || r.notes.length);
+      r.text = textOf([r.city, r.question, r.pros, r.cons, r.notes.join(' ')]);
+      return r;
+    }).filter(r => r.city);
+  }
+
+  function failed(sheet, w) {
+    const t = mapTable(sheet, {
+      id: 'fail', header: [/institution/, /status/],
+      fields: [['links', /link/], ['info', /misc|search info/], ['confirmed', /confirm/], ['source', /source/], ['status', /^status/], ['department', /depart/], ['institution', /institution/], ['date', /date/]],
+    }, w);
+    return t.records.map(r => { r.dateMs = A.parseDate(r.date); r.text = textOf([r.institution, r.department, r.status, r.info]); return r; }).filter(r => r.institution);
+  }
+  function frozen(sheet, w) {
+    const t = mapTable(sheet, {
+      id: 'froz', header: [/institution/, /status/],
+      fields: [['respDate', /response date/], ['date', /date/], ['institution', /institution/], ['department', /depart/], ['status', /^status/]],
+      multi: /note/,
+    }, w);
+    return t.records.map(r => { r.dateMs = A.parseDate(r.date); r.text = textOf([r.institution, r.department, r.status, r.notes.join(' ')]); return r; }).filter(r => r.institution);
+  }
+
+  /* Threads: first column is the date, every other filled cell is a message (post, then replies). */
+  function threads(sheet, key) {
+    const out = [];
+    sheet.rows.forEach((row, i) => {
+      if (i === 0) return;
+      const msgs = [];
+      for (let c = 1; c < row.length; c++) { const v = A.clean(row[c]); if (v) msgs.push(v); }
+      if (!msgs.length) return;
+      const date = A.clean(row[0]);
+      out.push({ id: key + ':' + i, row: i, date, dateMs: A.parseDate(date), messages: msgs, text: msgs.join(' ').toLowerCase() });
+    });
+    return out;
+  }
+
+  function glossary(sheet) {
+    const head = sheet.rows[0] || [];
+    const cols = [];
+    for (let c = 0; c < head.length; c++) {
+      const items = [];
+      for (let r = 1; r < sheet.rows.length; r++) {
+        const text = A.clean(sheet.rows[r][c]);
+        const url = A.safeUrl(sheet.links[r + ',' + c]);
+        if (text || url) items.push({ text, url });
+      }
+      if (A.clean(head[c]) || items.length) cols.push({ title: A.clean(head[c]), items });
+    }
+    return cols;
+  }
+
+  /* ---------- Build everything ---------- */
+  A.buildDB = function (wb) {
+    const warnings = [];
+    const S = sheetsByNumber(wb.sheets);
+    const need = n => { if (!S[n]) warnings.push('Tab (' + n + ') was not found in this workbook.'); return S[n]; };
+    const db = { warnings, tabs: wb.sheets.map(s => s.name.trim()) };
+    db.postings = S[8] ? postings(S[8], warnings) : (need(8), []);
+    db.apps = S[3] ? applications(S[3], warnings) : (need(3), []);
+    db.stats = S[4] ? applicantStats(S[4], warnings) : (need(4), []);
+    db.nego = S[5] ? negotiations(S[5], warnings) : (need(5), []);
+    db.noresp = S[6] ? noResponse(S[6], warnings) : (need(6), []);
+    db.offers = S[7] ? offers(S[7], warnings) : (need(7), []);
+    db.culture = S[9] ? culture(S[9], warnings) : (need(9), []);
+    db.locs = S[10] ? locations(S[10], warnings) : (need(10), []);
+    db.failed = S[11] ? failed(S[11], warnings) : [];
+    db.frozen = S[12] ? frozen(S[12], warnings) : [];
+    db.comments = S[2] ? threads(S[2], 'com') : (need(2), []);
+    db.happy = S[13] ? threads(S[13], 'joy') : [];
+    db.visa = S[14] ? threads(S[14], 'visa') : [];
+    db.glossary = S[1] ? glossary(S[1]) : [];
+    db.welcome = S[0] ? S[0].rows.map(r => A.clean(r[0])).filter(Boolean) : [];
+    db.noRespHint = S[6] && S[6].rows[0] ? S[6].rows[0].map(A.clean).filter(Boolean)[0] || '' : '';
+    // time window for charts: ignore stray old or future dates
+    db.win = A.window(db.postings.map(p => p.dateMs).concat(db.apps.map(a => a.addedMs)));
+    return db;
+  };
+})();
+
+/* ============================================================
+   Charts: hand-drawn SVG/HTML, no libraries.
+   Rules followed: thin marks (<=24px), 4px rounded data ends,
+   2px surface gaps, hairline solid grid, one axis, legend for
+   2+ series, tooltips on hover and focus (textContent only),
+   and a table view behind every chart.
+   ============================================================ */
+(function () {
+  const A = (globalThis.A = globalThis.A || {});
+  const h = A.h, s = A.s;
+
+  /* ---------- Tooltip ---------- */
+  let tipEl = null;
+  function ensureTip() {
+    if (tipEl) return tipEl;
+    tipEl = h('div', { class: 'tip', role: 'tooltip', hidden: true });
+    document.body.appendChild(tipEl);
+    window.addEventListener('scroll', () => A.tip.hide(), true);
+    return tipEl;
+  }
+  A.tip = {
+    /* anchor: PointerEvent-like {clientX, clientY} or an element */
+    show(anchor, title, rows) {
+      const el = ensureTip();
+      A.clear(el);
+      if (title) el.appendChild(h('div', { class: 'tip-title' }, title));
+      (rows || []).forEach(r => {
+        el.appendChild(h('div', { class: 'tip-row' },
+          r.color ? h('i', { class: 'tip-key', style: { background: r.color } }) : null,
+          h('strong', null, r.value),
+          r.label ? h('span', null, r.label) : null));
+      });
+      el.hidden = false;
+      let x, y;
+      if (anchor && anchor.getBoundingClientRect) {
+        const b = anchor.getBoundingClientRect(); x = b.left + b.width / 2; y = b.top;
+      } else { x = anchor.clientX; y = anchor.clientY; }
+      const tw = el.offsetWidth, th = el.offsetHeight;
+      let left = x + 14, top = y - th - 12;
+      if (left + tw > window.innerWidth - 8) left = x - tw - 14;
+      if (left < 8) left = 8;
+      if (top < 8) top = y + 18;
+      el.style.left = left + 'px'; el.style.top = top + 'px';
+    },
+    hide() { if (tipEl) tipEl.hidden = true; },
+  };
+  function wireTip(el, getContent, opts) {
+    const show = e => { const c = getContent(); A.tip.show(opts && opts.focusAnchor && e.type === 'focus' ? opts.focusAnchor : e, c.title, c.rows); };
+    el.addEventListener('pointermove', show);
+    el.addEventListener('pointerenter', show);
+    el.addEventListener('pointerleave', () => A.tip.hide());
+    el.addEventListener('focus', show);
+    el.addEventListener('blur', () => A.tip.hide());
+  }
+
+  /* ---------- Scales ---------- */
+  function niceScale(max, n) {
+    n = n || 4;
+    if (!(max > 0)) max = 1;
+    const raw = max / n, mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
+    const step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10) * mag;
+    const top = Math.ceil(max / step - 1e-9) * step;
+    const ticks = [];
+    for (let v = 0; v <= top + 1e-9; v += step) ticks.push(Math.round(v * 1e6) / 1e6);
+    return { top, ticks };
+  }
+  const topRounded = (x, y, w, hh, r) => {
+    r = Math.max(0, Math.min(r, w / 2, hh));
+    return 'M' + x + ',' + (y + hh) + ' V' + (y + r) + ' Q' + x + ',' + y + ' ' + (x + r) + ',' + y + ' H' + (x + w - r) + ' Q' + (x + w) + ',' + y + ' ' + (x + w) + ',' + (y + r) + ' V' + (y + hh) + ' Z';
+  };
+
+  /* ---------- Table view ---------- */
+  A.dataTable = function (t) {
+    const num = new Set(t.num || []);
+    return h('div', { class: 'table-wrap' },
+      h('table', { class: 'data-table' },
+        h('thead', null, h('tr', null, t.head.map((c, i) => h('th', { scope: 'col', class: num.has(i) ? 'num' : '' }, c)))),
+        h('tbody', null, t.rows.map(r => h('tr', null, r.map((c, i) => h('td', { class: num.has(i) ? 'num' : '' }, c === null || c === undefined ? '' : String(c))))))));
+  };
+
+  /* ---------- Chart card: title, legend, table toggle, responsive redraw ---------- */
+  A.chartCard = function (o) {
+    const body = h('div', { class: 'chart-body' });
+    const legend = h('div', { class: 'legend', hidden: true });
+    const btn = h('button', { class: 'btn quiet sm', type: 'button', 'aria-pressed': 'false', title: 'Switch between the chart and its data table' }, 'Table');
+    const card = h('section', { class: 'card chart-card' + (o.className ? ' ' + o.className : '') },
+      h('header', { class: 'card-head' },
+        h('div', null, h('h3', null, o.title), o.sub ? h('p', { class: 'sub' }, o.sub) : null),
+        h('div', { class: 'card-tools' }, o.tools || null, btn)),
+      body, legend);
+    let showTable = false, lastW = 0, raf = 0, cur = null;
+    function render() {
+      const w = Math.floor(body.clientWidth);
+      if (!w) return;
+      lastW = w;
+      try { cur = o.draw(w); } catch (e) { console.error(e); cur = { node: h('p', { class: 'empty' }, 'This chart could not be drawn.'), table: { head: [], rows: [] } }; }
+      A.clear(body);
+      body.appendChild(showTable ? A.dataTable(cur.table) : cur.node);
+      A.clear(legend);
+      const items = cur.legend || [];
+      legend.hidden = items.length < 2 || showTable;
+      items.forEach(it => legend.appendChild(h('span', { class: 'lg' }, h('i', { style: { background: it.color } }), it.label)));
+    }
+    btn.addEventListener('click', () => { showTable = !showTable; btn.setAttribute('aria-pressed', String(showTable)); btn.textContent = showTable ? 'Chart' : 'Table'; render(); });
+    if (typeof ResizeObserver !== 'undefined') {
+      new ResizeObserver(() => {
+        const w = Math.floor(body.clientWidth);
+        if (w && Math.abs(w - lastW) > 6) { cancelAnimationFrame(raf); raf = requestAnimationFrame(render); }
+      }).observe(body);
+    } else requestAnimationFrame(render);
+    return card;
+  };
+
+  /* ---------- Horizontal bars (HTML) ---------- */
+  /* items: [{label, value, sub?, onClick?}] */
+  A.hbars = function (items, o) {
+    o = o || {};
+    const max = Math.max(1, ...items.map(i => i.value));
+    const fmt = o.fmt || A.n;
+    const wrap = h('div', { class: 'hbars', role: 'list' });
+    items.forEach(it => {
+      const bar = h('span', { class: 'hb-bar', style: { flexBasis: 'calc((100% - 56px) * ' + (it.value / max).toFixed(4) + ')', background: o.color || 'var(--s1)' } });
+      const row = h('div', { class: 'hb-row' + (it.onClick ? ' click' : ''), role: 'listitem', tabindex: '0', 'aria-label': it.label + ': ' + fmt(it.value) },
+        h('span', { class: 'hb-label', title: it.label }, it.label),
+        h('span', { class: 'hb-track' }, bar, h('span', { class: 'hb-val' }, fmt(it.value))));
+      wireTip(row, () => ({ title: it.label, rows: [{ value: fmt(it.value), label: it.sub || o.unit || '' }] }));
+      if (it.onClick) {
+        row.addEventListener('click', it.onClick);
+        row.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); it.onClick(); } });
+      }
+      wrap.appendChild(row);
+    });
+    return {
+      node: wrap,
+      table: { head: [o.labelName || 'Category', o.valueName || 'Count'], rows: items.map(i => [i.label, fmt(i.value)]), num: [1] },
+    };
+  };
+
+  /* ---------- Columns (time or category), single series ---------- */
+  /* data: [{label, v, tipTitle?}] */
+  A.columns = function (data, w, o) {
+    o = o || {};
+    const H = o.height || 220, m = { l: 36, r: 6, t: 10, b: 26 };
+    const pw = w - m.l - m.r, ph = H - m.t - m.b;
+    const sc = niceScale(Math.max(1, ...data.map(d => d.v)), 4);
+    const y = v => m.t + ph - (v / sc.top) * ph;
+    const svg = s('svg', { viewBox: '0 0 ' + w + ' ' + H, width: w, height: H, role: 'img', 'aria-label': o.aria || 'Column chart' });
+    sc.ticks.forEach(t => {
+      svg.appendChild(s('line', { x1: m.l, x2: w - m.r, y1: y(t), y2: y(t), class: t === 0 ? 'axis' : 'grid' }));
+      svg.appendChild(s('text', { x: m.l - 6, y: y(t) + 4, class: 'tick', 'text-anchor': 'end' }, A.compact(t)));
+    });
+    const band = pw / Math.max(1, data.length);
+    const bw = Math.max(1.5, Math.min(24, band - 2));
+    const maxLen = Math.max(1, ...data.map(d => String(d.label).length));
+    const every = Math.max(1, Math.ceil((maxLen * 6.4 + 12) / band));
+    data.forEach((d, i) => {
+      const cx = m.l + band * i + band / 2, x0 = cx - bw / 2;
+      const bh = d.v > 0 ? Math.max(2, (d.v / sc.top) * ph) : 0;
+      let bar = null;
+      if (bh) { bar = s('path', { d: topRounded(x0, m.t + ph - bh, bw, bh, 4), class: 'mark', style: { fill: o.color || 'var(--s1)' } }); svg.appendChild(bar); }
+      if (i % every === 0) svg.appendChild(s('text', { x: cx, y: H - 8, class: 'tick', 'text-anchor': 'middle' }, d.label));
+      const hit = s('rect', { x: m.l + band * i, y: m.t, width: band, height: ph + m.b, class: 'hit', tabindex: '0', role: 'img', 'aria-label': (d.tipTitle || d.label) + ': ' + d.v });
+      wireTip(hit, () => ({ title: d.tipTitle || d.label, rows: [{ color: o.color || 'var(--s1)', value: A.n(d.v), label: o.unit || '' }] }), { focusAnchor: bar || hit });
+      if (bar) { hit.addEventListener('pointerenter', () => bar.classList.add('hot')); hit.addEventListener('pointerleave', () => bar.classList.remove('hot')); hit.addEventListener('focus', () => bar.classList.add('hot')); hit.addEventListener('blur', () => bar.classList.remove('hot')); }
+      svg.appendChild(hit);
+    });
+    return { node: svg, table: { head: [o.xName || 'Period', o.valueName || 'Count'], rows: data.map(d => [d.tipTitle || d.label, A.n(d.v)]), num: [1] } };
+  };
+
+  /* ---------- Stacked columns, several series (fixed colour per series) ---------- */
+  /* cats: [{label, tipTitle?}], series: [{name, color, values:[]}] */
+  A.stacked = function (cats, series, w, o) {
+    o = o || {};
+    const H = o.height || 240, m = { l: 36, r: 6, t: 10, b: 26 };
+    const pw = w - m.l - m.r, ph = H - m.t - m.b;
+    const totals = cats.map((c, i) => A.sum(series.map(sr => sr.values[i] || 0)));
+    const sc = niceScale(Math.max(1, ...totals), 4);
+    const y = v => m.t + ph - (v / sc.top) * ph;
+    const svg = s('svg', { viewBox: '0 0 ' + w + ' ' + H, width: w, height: H, role: 'img', 'aria-label': o.aria || 'Stacked column chart' });
+    sc.ticks.forEach(t => {
+      svg.appendChild(s('line', { x1: m.l, x2: w - m.r, y1: y(t), y2: y(t), class: t === 0 ? 'axis' : 'grid' }));
+      svg.appendChild(s('text', { x: m.l - 6, y: y(t) + 4, class: 'tick', 'text-anchor': 'end' }, A.compact(t)));
+    });
+    const band = pw / Math.max(1, cats.length), bw = Math.max(2, Math.min(24, band - 2));
+    const maxLen = Math.max(1, ...cats.map(c => String(c.label).length));
+    const every = Math.max(1, Math.ceil((maxLen * 6.4 + 12) / band));
+    cats.forEach((c, i) => {
+      const cx = m.l + band * i + band / 2, x0 = cx - bw / 2;
+      let acc = 0;
+      const segs = series.map(sr => ({ sr, v: sr.values[i] || 0 })).filter(z => z.v > 0);
+      segs.forEach((z, k) => {
+        const yTop = y(acc + z.v), yBot = y(acc);
+        const hh = Math.max(1, yBot - yTop - (k > 0 ? 2 : 0)); // 2px surface gap between segments
+        const top = k === segs.length - 1;
+        const yy = yTop; // the 2px gap sits at the bottom edge, between this segment and the one below
+        const p = top ? s('path', { d: topRounded(x0, yy, bw, hh, 4), style: { fill: z.sr.color } }) : s('rect', { x: x0, y: yy, width: bw, height: hh, style: { fill: z.sr.color } });
+        p.setAttribute('class', 'mark');
+        svg.appendChild(p);
+        acc += z.v;
+      });
+      if (i % every === 0) svg.appendChild(s('text', { x: cx, y: H - 8, class: 'tick', 'text-anchor': 'middle' }, c.label));
+      const hit = s('rect', { x: m.l + band * i, y: m.t, width: band, height: ph + m.b, class: 'hit', tabindex: '0', role: 'img', 'aria-label': (c.tipTitle || c.label) + ': ' + totals[i] });
+      wireTip(hit, () => ({ title: (c.tipTitle || c.label) + ' – ' + A.n(totals[i]) + ' total', rows: series.filter(sr => (sr.values[i] || 0) > 0).reverse().map(sr => ({ color: sr.color, value: A.n(sr.values[i]), label: sr.name })) }));
+      svg.appendChild(hit);
+    });
+    return {
+      node: svg,
+      legend: series.map(sr => ({ label: sr.name, color: sr.color })),
+      table: { head: [o.xName || 'Period'].concat(series.map(sr => sr.name), ['Total']), rows: cats.map((c, i) => [c.tipTitle || c.label].concat(series.map(sr => A.n(sr.values[i] || 0)), [A.n(totals[i])])), num: series.map((_, i) => i + 1).concat([series.length + 1]) },
+    };
+  };
+
+  /* ---------- Cumulative line + 10% area ---------- */
+  /* pts: [{t (ms), v}] ascending */
+  A.areaLine = function (pts, w, o) {
+    o = o || {};
+    const H = o.height || 220, m = { l: 40, r: 14, t: 10, b: 26 };
+    const pw = w - m.l - m.r, ph = H - m.t - m.b;
+    const sc = niceScale(Math.max(1, ...pts.map(p => p.v)), 4);
+    const t0 = pts[0].t, t1 = pts[pts.length - 1].t;
+    const x = t => m.l + (t1 === t0 ? pw / 2 : ((t - t0) / (t1 - t0)) * pw);
+    const y = v => m.t + ph - (v / sc.top) * ph;
+    const svg = s('svg', { viewBox: '0 0 ' + w + ' ' + H, width: w, height: H, role: 'img', 'aria-label': o.aria || 'Line chart' });
+    sc.ticks.forEach(t => {
+      svg.appendChild(s('line', { x1: m.l, x2: w - m.r, y1: y(t), y2: y(t), class: t === 0 ? 'axis' : 'grid' }));
+      svg.appendChild(s('text', { x: m.l - 6, y: y(t) + 4, class: 'tick', 'text-anchor': 'end' }, A.compact(t)));
+    });
+    // month ticks on x
+    let d = new Date(A.monthStart(t0)); const ticks = [];
+    while (d.getTime() <= t1) { if (d.getTime() >= t0 - 2 * A.DAY) ticks.push(d.getTime()); d = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1)); }
+    const every = Math.max(1, Math.ceil(46 / (pw / Math.max(1, ticks.length))));
+    ticks.forEach((t, i) => { if (i % every === 0) svg.appendChild(s('text', { x: x(t), y: H - 8, class: 'tick', 'text-anchor': 'middle' }, A.MON[new Date(t).getUTCMonth()])); });
+    const line = pts.map((p, i) => (i ? 'L' : 'M') + x(p.t).toFixed(1) + ',' + y(p.v).toFixed(1)).join(' ');
+    svg.appendChild(s('path', { d: line + ' L' + x(t1).toFixed(1) + ',' + y(0) + ' L' + x(t0).toFixed(1) + ',' + y(0) + ' Z', style: { fill: o.color || 'var(--s1)', opacity: '0.10' } }));
+    svg.appendChild(s('path', { d: line, class: 'line', style: { stroke: o.color || 'var(--s1)' } }));
+    const last = pts[pts.length - 1];
+    svg.appendChild(s('circle', { cx: x(last.t), cy: y(last.v), r: 4.5, class: 'dot', style: { fill: o.color || 'var(--s1)' } }));
+    svg.appendChild(s('text', { x: x(last.t) - 8, y: y(last.v) - 10, class: 'endlabel', 'text-anchor': 'end' }, A.n(last.v)));
+    const cross = s('line', { y1: m.t, y2: m.t + ph, class: 'cross', visibility: 'hidden' });
+    const dot = s('circle', { r: 4.5, class: 'dot', visibility: 'hidden', style: { fill: o.color || 'var(--s1)' } });
+    svg.appendChild(cross); svg.appendChild(dot);
+    const hit = s('rect', { x: m.l, y: m.t, width: pw, height: ph + m.b, class: 'hit', tabindex: '0', role: 'img', 'aria-label': o.aria || 'Line chart' });
+    function at(e) {
+      const r = svg.getBoundingClientRect(); const px = (e.clientX - r.left) * (w / r.width);
+      let best = 0, bd = Infinity;
+      pts.forEach((p, i) => { const dd = Math.abs(x(p.t) - px); if (dd < bd) { bd = dd; best = i; } });
+      const p = pts[best];
+      cross.setAttribute('x1', x(p.t)); cross.setAttribute('x2', x(p.t)); cross.setAttribute('visibility', 'visible');
+      dot.setAttribute('cx', x(p.t)); dot.setAttribute('cy', y(p.v)); dot.setAttribute('visibility', 'visible');
+      A.tip.show(e, A.fmtDate(p.t), [{ color: o.color || 'var(--s1)', value: A.n(p.v), label: o.unit || '' }]);
+    }
+    hit.addEventListener('pointermove', at);
+    hit.addEventListener('pointerleave', () => { cross.setAttribute('visibility', 'hidden'); dot.setAttribute('visibility', 'hidden'); A.tip.hide(); });
+    svg.appendChild(hit);
+    return { node: svg, table: { head: ['Date', o.valueName || 'Total'], rows: pts.map(p => [A.fmtDate(p.t), A.n(p.v)]), num: [1] } };
+  };
+
+  /* ---------- Scatter with nearest-point hover ---------- */
+  /* pts: [{x, y, label, sub}] */
+  A.scatter = function (pts, w, o) {
+    o = o || {};
+    const H = o.height || 280, m = { l: 40, r: 12, t: 12, b: 38 };
+    const pw = w - m.l - m.r, ph = H - m.t - m.b;
+    const sx = niceScale(Math.max(1, ...pts.map(p => p.x)), 5), sy = niceScale(Math.max(1, ...pts.map(p => p.y)), 4);
+    const X = v => m.l + (v / sx.top) * pw, Y = v => m.t + ph - (v / sy.top) * ph;
+    const svg = s('svg', { viewBox: '0 0 ' + w + ' ' + H, width: w, height: H, role: 'img', 'aria-label': o.aria || 'Scatter plot' });
+    sy.ticks.forEach(t => {
+      svg.appendChild(s('line', { x1: m.l, x2: w - m.r, y1: Y(t), y2: Y(t), class: t === 0 ? 'axis' : 'grid' }));
+      svg.appendChild(s('text', { x: m.l - 6, y: Y(t) + 4, class: 'tick', 'text-anchor': 'end' }, A.compact(t)));
+    });
+    sx.ticks.forEach(t => svg.appendChild(s('text', { x: X(t), y: m.t + ph + 16, class: 'tick', 'text-anchor': 'middle' }, A.compact(t))));
+    svg.appendChild(s('text', { x: m.l + pw / 2, y: H - 4, class: 'axis-title', 'text-anchor': 'middle' }, o.xName || ''));
+    svg.appendChild(s('text', { x: 12, y: m.t + ph / 2, class: 'axis-title', 'text-anchor': 'middle', transform: 'rotate(-90 12 ' + (m.t + ph / 2) + ')' }, o.yName || ''));
+    // group identical coordinates
+    const groups = new Map();
+    pts.forEach(p => { const k = p.x + '|' + p.y; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(p); });
+    const G = [...groups.values()];
+    G.forEach(g => svg.appendChild(s('circle', { cx: X(g[0].x), cy: Y(g[0].y), r: 5, class: 'dot', style: { fill: o.color || 'var(--s1)' } })));
+    const ring = s('circle', { r: 9, class: 'ring', visibility: 'hidden' });
+    svg.appendChild(ring);
+    const hit = s('rect', { x: 0, y: 0, width: w, height: H, class: 'hit', tabindex: '0', role: 'img', 'aria-label': o.aria || 'Scatter plot' });
+    hit.addEventListener('pointermove', e => {
+      const r = svg.getBoundingClientRect(); const px = (e.clientX - r.left) * (w / r.width), py = (e.clientY - r.top) * (H / r.height);
+      let best = null, bd = 28 * 28;
+      G.forEach(g => { const dx = X(g[0].x) - px, dy = Y(g[0].y) - py, dd = dx * dx + dy * dy; if (dd < bd) { bd = dd; best = g; } });
+      if (!best) { ring.setAttribute('visibility', 'hidden'); A.tip.hide(); return; }
+      ring.setAttribute('cx', X(best[0].x)); ring.setAttribute('cy', Y(best[0].y)); ring.setAttribute('visibility', 'visible');
+      A.tip.show(e, best.length > 1 ? best.length + ' respondents' : (best[0].label || 'Respondent'), [{ color: o.color || 'var(--s1)', value: A.n(best[0].x), label: o.xName || 'x' }, { color: o.color || 'var(--s1)', value: A.n(best[0].y), label: o.yName || 'y' }].concat(best.length === 1 && best[0].sub ? [{ value: '', label: best[0].sub }] : []));
+    });
+    hit.addEventListener('pointerleave', () => { ring.setAttribute('visibility', 'hidden'); A.tip.hide(); });
+    svg.appendChild(hit);
+    return { node: svg, table: { head: ['Respondent', o.xName || 'x', o.yName || 'y'], rows: pts.map((p, i) => [p.label || '#' + (i + 1), A.n(p.x), A.n(p.y)]), num: [1, 2] } };
+  };
+
+  /* ---------- Dumbbell: two values per row on one money axis ---------- */
+  /* rows: [{label, a, b}] */
+  A.dumbbell = function (rows, w, o) {
+    o = o || {};
+    const rowH = 30, m = { l: Math.min(190, Math.max(96, w * 0.34)), r: 16, t: 8, b: 28 };
+    const H = m.t + rows.length * rowH + m.b, pw = w - m.l - m.r;
+    const vals = rows.flatMap(r => [r.a, r.b]).filter(v => v !== null && v !== undefined);
+    const sc = niceScale(Math.max(1, ...vals), 4);
+    const X = v => m.l + (v / sc.top) * pw;
+    const svg = s('svg', { viewBox: '0 0 ' + w + ' ' + H, width: w, height: H, role: 'img', 'aria-label': o.aria || 'Comparison chart' });
+    sc.ticks.forEach(t => {
+      svg.appendChild(s('line', { x1: X(t), x2: X(t), y1: m.t, y2: H - m.b, class: t === 0 ? 'axis' : 'grid' }));
+      svg.appendChild(s('text', { x: X(t), y: H - 10, class: 'tick', 'text-anchor': 'middle' }, o.fmt ? o.fmt(t) : A.compact(t)));
+    });
+    const maxChars = Math.floor((m.l - 12) / 6.3);
+    rows.forEach((r, i) => {
+      const cy = m.t + i * rowH + rowH / 2;
+      const lab = r.label.length > maxChars ? r.label.slice(0, maxChars - 1) + '…' : r.label;
+      svg.appendChild(s('text', { x: m.l - 10, y: cy + 4, class: 'rowlabel', 'text-anchor': 'end' }, lab));
+      if (r.a !== null && r.a !== undefined && r.b !== null && r.b !== undefined) svg.appendChild(s('line', { x1: X(r.a), x2: X(r.b), y1: cy, y2: cy, class: 'link' }));
+      if (r.a !== null && r.a !== undefined) svg.appendChild(s('circle', { cx: X(r.a), cy, r: 5, class: 'dot', style: { fill: o.aColor } }));
+      if (r.b !== null && r.b !== undefined) svg.appendChild(s('circle', { cx: X(r.b), cy, r: 5, class: 'dot', style: { fill: o.bColor } }));
+      const hit = s('rect', { x: 0, y: cy - rowH / 2, width: w, height: rowH, class: 'hit', tabindex: '0', role: 'img', 'aria-label': r.label });
+      wireTip(hit, () => ({ title: r.label, rows: [{ color: o.aColor, value: r.a === null || r.a === undefined ? 'n/a' : o.fmt(r.a), label: o.aName }, { color: o.bColor, value: r.b === null || r.b === undefined ? 'n/a' : o.fmt(r.b), label: o.bName }] }));
+      svg.appendChild(hit);
+    });
+    return {
+      node: svg,
+      legend: [{ label: o.aName, color: o.aColor }, { label: o.bName, color: o.bColor }],
+      table: { head: ['Entry', o.aName, o.bName], rows: rows.map(r => [r.label, r.a === null || r.a === undefined ? '' : o.fmt(r.a), r.b === null || r.b === undefined ? '' : o.fmt(r.b)]), num: [1, 2] },
+    };
+  };
+
+  /* ---------- US tile map (each state is one square) ---------- */
+  const TILES = { AK: [0, 0], ME: [10, 0], WI: [5, 1], VT: [9, 1], NH: [10, 1], WA: [0, 2], ID: [1, 2], MT: [2, 2], ND: [3, 2], MN: [4, 2], IL: [5, 2], MI: [6, 2], NY: [8, 2], MA: [9, 2], OR: [0, 3], NV: [1, 3], WY: [2, 3], SD: [3, 3], IA: [4, 3], IN: [5, 3], OH: [6, 3], PA: [7, 3], NJ: [8, 3], CT: [9, 3], RI: [10, 3], CA: [0, 4], UT: [1, 4], CO: [2, 4], NE: [3, 4], MO: [4, 4], KY: [5, 4], WV: [6, 4], VA: [7, 4], MD: [8, 4], DE: [9, 4], AZ: [1, 5], NM: [2, 5], KS: [3, 5], AR: [4, 5], TN: [5, 5], NC: [6, 5], SC: [7, 5], DC: [8, 5], OK: [3, 6], LA: [4, 6], MS: [5, 6], AL: [6, 6], GA: [7, 6], HI: [0, 7], TX: [3, 7], FL: [8, 7] };
+  A.tileMap = function (counts, w, o) {
+    o = o || {};
+    const gap = 3, cols = 11, rowsN = 8;
+    const size = Math.max(22, Math.min(46, Math.floor((w - gap * (cols - 1)) / cols)));
+    const W = cols * size + gap * (cols - 1), H = rowsN * size + gap * (rowsN - 1);
+    const max = Math.max(1, ...Object.keys(TILES).map(k => counts.get(k) || 0));
+    const bin = v => (v <= 0 ? 0 : Math.min(5, Math.max(1, Math.ceil((v / max) * 5 - 1e-9))));
+    const svg = s('svg', { viewBox: '0 0 ' + W + ' ' + H, width: W, height: H, class: 'tilemap', role: 'group', 'aria-label': o.aria || 'Map of US states by count' });
+    Object.keys(TILES).forEach(code => {
+      const v = counts.get(code) || 0, b = bin(v), [cx, cy] = TILES[code];
+      const x = cx * (size + gap), y = cy * (size + gap);
+      const g = s('g', { class: 'tile b' + b + (o.onClick && v ? ' click' : ''), tabindex: '0', role: 'img', 'aria-label': A.STATES[code] + ': ' + v });
+      g.appendChild(s('rect', { x, y, width: size, height: size, rx: 4 }));
+      g.appendChild(s('text', { x: x + size / 2, y: y + size / 2 + 4, 'text-anchor': 'middle' }, code));
+      wireTip(g, () => ({ title: A.STATES[code], rows: [{ value: A.n(v), label: o.unit || 'postings' }] }));
+      if (o.onClick && v) { g.addEventListener('click', () => o.onClick(code)); g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); o.onClick(code); } }); }
+      svg.appendChild(g);
+    });
+    const rows = Object.keys(counts instanceof Map ? Object.fromEntries(counts) : {}).sort((a, b) => counts.get(b) - counts.get(a));
+    const scale = h('div', { class: 'scale' },
+      h('span', null, 'Fewer'),
+      [1, 2, 3, 4, 5].map(i => h('i', { class: 'sw b' + i })),
+      h('span', null, 'More (up to ' + A.n(max) + ')'));
+    return { node: h('div', { class: 'tilemap-wrap' }, svg, scale), table: { head: ['State', o.unit || 'Postings'], rows: rows.map(k => [A.STATES[k] || k, A.n(counts.get(k))]), num: [1] } };
+  };
+
+  /* ---------- One whole split into parts (tall segmented bar) ---------- */
+  /* parts: [{label, value, color, ink}] */
+  A.segBar = function (parts, o) {
+    o = o || {};
+    parts = parts.filter(p => p.value > 0);
+    const total = A.sum(parts.map(p => p.value)) || 1;
+    const bar = h('div', { class: 'segbar', role: 'img', 'aria-label': (o.aria || 'Breakdown') + ': ' + parts.map(p => p.label + ' ' + p.value).join(', ') });
+    parts.forEach(p => {
+      const share = p.value / total;
+      const seg = h('span', { class: 'seg', tabindex: '0', style: { flexGrow: String(p.value), background: p.color, color: p.ink || '#fff' } }, share >= 0.09 ? Math.round(share * 100) + '%' : '');
+      wireTip(seg, () => ({ title: p.label, rows: [{ color: p.color, value: A.n(p.value), label: A.pct(share, 1) + ' of ' + A.n(total) }] }));
+      if (o.onClick && p.onClick) { seg.classList.add('click'); seg.addEventListener('click', p.onClick); }
+      bar.appendChild(seg);
+    });
+    const legend = h('div', { class: 'legend flush' }, parts.map(p => h('span', { class: 'lg' }, h('i', { style: { background: p.color } }), p.label + ' ' + A.n(p.value))));
+    return { node: h('div', null, bar, legend), table: { head: [o.name || 'Category', 'Count', 'Share'], rows: parts.map(p => [p.label, A.n(p.value), A.pct(p.value / total, 1)]), num: [1, 2] } };
+  };
+})();
+
+/* ============================================================
+   Statistics: plain calculations on the normalised records.
+   No DOM in here, so every number can be tested on its own.
+   ============================================================ */
+(function () {
+  const A = (globalThis.A = globalThis.A || {});
+
+  const inWin = (t, win) => t !== null && t !== undefined && (!win || (t >= win.lo && t <= win.hi));
+
+  /* Weekly counts (weeks start Monday), with empty weeks filled in. */
+  A.weekly = function (times, win) {
+    const t = times.filter(x => inWin(x, win));
+    if (!t.length) return [];
+    const c = A.count(t, x => A.weekStart(x));
+    const first = Math.min(...c.keys());
+    const last = Math.max(...c.keys(), A.weekStart(A.today()));
+    const out = [];
+    for (let w = first; w <= last; w += 7 * A.DAY) out.push({ t: w, v: c.get(w) || 0 });
+    return out;
+  };
+  A.monthly = function (times, win) {
+    const t = times.filter(x => inWin(x, win));
+    if (!t.length) return [];
+    const c = A.count(t, x => A.monthStart(x));
+    const first = Math.min(...c.keys()), last = Math.max(...c.keys());
+    const out = [];
+    for (let d = new Date(first); d.getTime() <= last; d = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1))) out.push({ t: d.getTime(), v: c.get(d.getTime()) || 0 });
+    return out;
+  };
+  /* Running total by day: [{t, v}] */
+  A.cumulative = function (times, win) {
+    const t = times.filter(x => inWin(x, win)).sort((a, b) => a - b);
+    if (!t.length) return [];
+    const out = []; let n = 0;
+    for (let i = 0; i < t.length; i++) {
+      n++;
+      if (i === t.length - 1 || t[i + 1] !== t[i]) out.push({ t: t[i], v: n });
+    }
+    return out;
+  };
+
+  A.RESP_ORDER = ['Remote interview', 'Onsite interview', 'Offer', 'Reference letters requested', 'Rejection', 'Other'];
+
+  A.responseMix = function (apps) {
+    const c = A.count(apps, a => a.kind);
+    return A.RESP_ORDER.map(k => ({ kind: k, n: c.get(k) || 0 }));
+  };
+
+  A.responsesByMonth = function (apps, win) {
+    const rows = apps.filter(a => a.kind !== 'No response logged').map(a => ({ t: a.respondedMs !== null && inWin(a.respondedMs, win) ? a.respondedMs : a.addedMs, kind: a.kind })).filter(r => inWin(r.t, win));
+    if (!rows.length) return { months: [], byKind: {} };
+    const first = A.monthStart(Math.min(...rows.map(r => r.t))), last = A.monthStart(Math.max(...rows.map(r => r.t)));
+    const months = [];
+    for (let d = new Date(first); d.getTime() <= last; d = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1))) months.push(d.getTime());
+    const byKind = {};
+    A.RESP_ORDER.forEach(k => { byKind[k] = months.map(() => 0); });
+    rows.forEach(r => { const i = months.indexOf(A.monthStart(r.t)); if (i >= 0 && byKind[r.kind]) byKind[r.kind][i]++; });
+    return { months, byKind };
+  };
+
+  /* Institutions that sent the most interview invitations (remote or onsite). */
+  A.topInterviewers = function (apps, n) {
+    const m = new Map();
+    apps.forEach(a => {
+      if (a.kind !== 'Remote interview' && a.kind !== 'Onsite interview') return;
+      const key = A.norm(a.institution).replace(/^the /, '');
+      const cur = m.get(key) || { name: a.institution, n: 0 };
+      cur.n++; m.set(key, cur);
+    });
+    return [...m.values()].sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)).slice(0, n);
+  };
+
+  A.keywordMatcher = function (keywords) {
+    const k = (keywords || []).map(x => A.norm(x)).filter(x => x.length > 1);
+    return item => k.length > 0 && k.some(w => item.text.indexOf(w) >= 0);
+  };
+
+  A.kpis = function (db, prevVisitMs, keywords) {
+    const today = A.today();
+    const match = A.keywordMatcher(keywords);
+    const isRecent = p => p.dateMs !== null && p.dateMs >= today - 7 * A.DAY && p.dateMs <= today + 2 * A.DAY;
+    const sinceVisit = p => prevVisitMs && p.dateMs !== null && p.dateMs > A.today() - 0 && false;
+    const prevDay = prevVisitMs ? Math.floor(prevVisitMs / A.DAY) * A.DAY : null;
+    const isNew = p => prevDay !== null && p.dateMs !== null && p.dateMs > prevDay && p.dateMs <= today + 2 * A.DAY;
+    const P = db.postings;
+    const kinds = A.count(db.apps, a => a.kind);
+    return {
+      postings: P.length,
+      postingsWeek: P.filter(isRecent).length,
+      postingsNew: prevDay === null ? null : P.filter(isNew).length,
+      matching: P.filter(match).length,
+      matchingWeek: P.filter(p => match(p) && isRecent(p)).length,
+      apps: db.apps.length,
+      interviews: (kinds.get('Remote interview') || 0) + (kinds.get('Onsite interview') || 0),
+      remote: kinds.get('Remote interview') || 0,
+      onsite: kinds.get('Onsite interview') || 0,
+      offers: (kinds.get('Offer') || 0),
+      acceptedOffers: db.offers.filter(o => /accept/i.test(o.status)).length,
+      threads: db.comments.length,
+      threadsWeek: db.comments.filter(c => c.dateMs !== null && c.dateMs >= today - 7 * A.DAY && c.dateMs <= today + 2 * A.DAY).length,
+      isRecent, isNew, match,
+    };
+  };
+
+  /* Self-reported applicant numbers from the stats tab. */
+  A.benchmarks = function (stats) {
+    const S = stats.filter(s => !s.example);
+    const n = S.length;
+    const share = f => (n ? S.filter(f).length / n : null);
+    const bins = [[1, 10, '1–10'], [11, 25, '11–25'], [26, 50, '26–50'], [51, 75, '51–75'], [76, 99, '76–99'], [100, 1e9, '100 or more']];
+    const hist = bins.map(([lo, hi, label]) => ({ label, v: S.filter(s => s.appsNum >= lo && s.appsNum <= hi).length }));
+    const cycles = ['1st cycle', '2nd cycle', '3rd cycle or later'].map(c => {
+      const g = S.filter(s => s.cycle === c);
+      return { cycle: c, n: g.length, medApps: A.median(g.map(s => s.appsNum)), interview: g.length ? g.filter(s => s.interviews > 0).length / g.length : null, offer: g.length ? g.filter(s => s.offerNum > 0).length / g.length : null };
+    });
+    const types = A.count(S.flatMap(s => s.instTypes), t => t);
+    return {
+      n, ongoing: S.filter(s => s.ongoing).length,
+      medApps: A.median(S.map(s => s.appsNum)),
+      medInterviews: A.median(S.map(s => s.interviews)),
+      withInterview: share(s => s.interviews > 0), withOnsite: share(s => s.onsiteNum > 0), withOffer: share(s => s.offerNum > 0), withReply: share(s => s.heardNum > 0),
+      hist, cycles, types: [...types.entries()].sort((a, b) => b[1] - a[1]),
+      points: S.map((s, i) => ({ x: s.appsNum, y: s.interviews, label: (s.discipline || 'Respondent ' + (i + 1)), sub: s.cycle + (s.instType ? ', ' + s.instType : '') })),
+    };
+  };
+
+  /* Money rows for the dumbbell charts. */
+  A.moneyRows = function (nego, offKey, grantKey) {
+    return nego.filter(n => (n[offKey] !== null || n[grantKey] !== null) && (n[offKey] || n[grantKey])).map(n => ({
+      label: n.label + (n.dateMs ? ' (' + A.MON[new Date(n.dateMs).getUTCMonth()] + ' ' + new Date(n.dateMs).getUTCFullYear() + ')' : ''),
+      a: n[offKey], b: n[grantKey],
+    }));
+  };
+
+  /* Day counts used in lists. */
+  A.daysSince = t => (t === null || t === undefined ? null : Math.floor((A.today() - t) / A.DAY));
+})();
+
+/* ============================================================
+   Shared UI: icons, remembered state, and the reusable
+   search + filter + sort list used by most screens.
+   ============================================================ */
+(function () {
+  const A = (globalThis.A = globalThis.A || {});
+  const h = A.h, s = A.s;
+
+  /* ---------- Icons (stroke, 24px grid) ---------- */
+  const ICON = {
+    search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
+    refresh: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4.5V11h-6.5"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.5 1.5M17.2 17.2l1.5 1.5M5.3 18.7l1.5-1.5M17.2 6.8l1.5-1.5"/>',
+    moon: '<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/>',
+    sliders: '<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
+    ext: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+    star: '<path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.6 9.7l5.8-.8z"/>',
+    x: '<path d="M6 6l12 12M18 6L6 18"/>',
+    menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+    download: '<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',
+    file: '<path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7z"/><path d="M14 3v4h4"/>',
+  };
+  A.icon = function (name, size, filled) {
+    const svg = s('svg', { viewBox: '0 0 24 24', width: size || 16, height: size || 16, fill: filled ? 'currentColor' : 'none', stroke: 'currentColor', 'stroke-width': '1.8', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true', focusable: 'false' });
+    svg.innerHTML = ICON[name] || ''; // static, trusted markup only
+    return svg;
+  };
+  A.brandMark = function () {
+    const svg = s('svg', { viewBox: '0 0 30 30', width: 30, height: 30, 'aria-hidden': 'true' });
+    const o = [[0, 0, .28], [1, 0, .55], [2, 0, 1], [0, 1, .55], [1, 1, 1], [2, 1, .4], [0, 2, 1], [1, 2, .4], [2, 2, .75]];
+    o.forEach(([cx, cy, op]) => svg.appendChild(s('rect', { x: cx * 10 + 1, y: cy * 10 + 1, width: 8, height: 8, rx: 2, style: { fill: 'var(--accent)', opacity: String(op) } })));
+    return svg;
+  };
+
+  /* ---------- Shared state ---------- */
+  A.UI = { state: {}, prevVisit: null, keywords: [], saved: new Set() };
+  A.postKey = p => (A.norm(p.university) + '|' + A.norm(p.department) + '|' + (p.url || '')).slice(0, 220);
+  A.toggleSaved = function (key) {
+    if (A.UI.saved.has(key)) A.UI.saved.delete(key); else A.UI.saved.add(key);
+    A.store.set('saved', [...A.UI.saved]);
+  };
+
+  /* ---------- Small builders ---------- */
+  A.go = function (view, params) {
+    const q = params ? Object.keys(params).filter(k => params[k] !== '' && params[k] !== undefined && params[k] !== null).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k])).join('&') : '';
+    location.hash = '#/' + view + (q ? '?' + q : '');
+  };
+  A.chip = (text, cls, onClick) => {
+    const c = h('span', { class: 'chip' + (cls ? ' ' + cls : '') + (onClick ? ' link' : ''), title: text }, text);
+    if (onClick) { c.setAttribute('role', 'link'); c.tabIndex = 0; c.addEventListener('click', onClick); c.addEventListener('keydown', e => { if (e.key === 'Enter') onClick(); }); }
+    return c;
+  };
+  A.extButton = (url, label) => h('a', { class: 'btn sm', href: A.safeUrl(url), target: '_blank', rel: 'noopener noreferrer', title: url }, label || 'Open posting', A.icon('ext', 13));
+  A.pageHead = (title, lede) => h('div', { class: 'pagehead' }, h('h1', null, title), lede ? h('p', { class: 'lede' }, lede) : null);
+  A.emptyState = (title, text) => h('div', { class: 'empty' }, h('b', null, title), text || '');
+  A.badge = (label, color) => h('span', { class: 'badge' }, h('i', { style: { background: color } }), label);
+  A.RESP_COLOR = { 'Remote interview': 'var(--s1)', 'Onsite interview': 'var(--s2)', 'Offer': 'var(--s3)', 'Reference letters requested': 'var(--s4)', 'Rejection': 'var(--s5)', 'Other': 'var(--s6)', 'No response logged': 'var(--axis)' };
+  A.RESP_INK = { 'Reference letters requested': '#0b0b0b' };
+
+  /* A few notes shown, the rest behind a toggle. */
+  A.notesBlock = function (notes, re, keep) {
+    keep = keep || 2;
+    if (!notes || !notes.length) return null;
+    const box = h('div', { class: 'notes' });
+    const mk = n => h('div', { class: 'note' }, A.rich(n, re));
+    notes.slice(0, keep).forEach(n => box.appendChild(mk(n)));
+    if (notes.length > keep) {
+      const rest = notes.slice(keep);
+      const btn = h('button', { class: 'linkbtn', type: 'button' }, 'Show ' + rest.length + ' more ' + (rest.length === 1 ? 'comment' : 'comments'));
+      let open = false; const extra = [];
+      btn.addEventListener('click', () => {
+        open = !open;
+        if (open) { rest.forEach(n => { const e = mk(n); extra.push(e); box.insertBefore(e, btn); }); btn.textContent = 'Show fewer'; }
+        else { extra.splice(0).forEach(e => e.remove()); btn.textContent = 'Show ' + rest.length + ' more ' + (rest.length === 1 ? 'comment' : 'comments'); }
+      });
+      box.appendChild(btn);
+    }
+    return box;
+  };
+
+  A.thread = function (head, messages, re, keepReplies) {
+    keepReplies = keepReplies || 3;
+    const el = h('article', { class: 'thread' }, head, h('div', { class: 'post' }, A.rich(messages[0], re)));
+    if (messages.length > 1) {
+      const rep = h('div', { class: 'replies' });
+      const mk = m => h('div', { class: 'reply' }, A.rich(m, re));
+      messages.slice(1, 1 + keepReplies).forEach(m => rep.appendChild(mk(m)));
+      if (messages.length - 1 > keepReplies) {
+        const rest = messages.slice(1 + keepReplies);
+        let open = false; const extra = [];
+        const label = () => 'Show ' + rest.length + ' more ' + (rest.length === 1 ? 'reply' : 'replies');
+        const btn = h('button', { class: 'linkbtn', type: 'button' }, label());
+        btn.addEventListener('click', () => {
+          open = !open;
+          if (open) { rest.forEach(m => { const e = mk(m); extra.push(e); rep.insertBefore(e, btn); }); btn.textContent = 'Show fewer replies'; }
+          else { extra.splice(0).forEach(e => e.remove()); btn.textContent = label(); }
+        });
+        rep.appendChild(btn);
+      }
+      el.appendChild(rep);
+    }
+    return el;
+  };
+
+  /* ---------- CSV export ---------- */
+  A.downloadCsv = function (name, head, rows) {
+    const q = v => '"' + String(v === null || v === undefined ? '' : v).replace(/"/g, '""') + '"';
+    const csv = '﻿' + [head].concat(rows).map(r => r.map(q).join(',')).join('\r\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const a = h('a', { href: url, download: name });
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  };
+
+  /* ---------- The reusable list ---------- */
+  /* cfg: {id, items, placeholder, noun, filters:[{key,label,values(item),order?}],
+           toggles:[{key,label,test(item)}], sorts:[{key,label,cmp}], row(item,ctx), csv:{name,cols:[[label,fn]]},
+           params, pageSize, emptyText} */
+  A.listView = function (cfg) {
+    const page = cfg.pageSize || 40;
+    const st = A.UI.state[cfg.id] || (A.UI.state[cfg.id] = { q: '', f: {}, sort: cfg.sorts[0].key, on: {}, shown: page });
+    const P = {};
+    Object.keys(cfg.params || {}).forEach(k => { if (cfg.params[k] !== undefined && cfg.params[k] !== '') P[k] = cfg.params[k]; });
+    if (Object.keys(P).length) { st.q = ''; st.f = {}; st.on = {}; } // arriving from a link starts a fresh view
+    if (P.q !== undefined) st.q = P.q;
+    (cfg.filters || []).forEach(f => { if (P[f.key] !== undefined) st.f[f.key] = P[f.key]; });
+    (cfg.toggles || []).forEach(t => { if (P[t.key] !== undefined) st.on[t.key] = P[t.key] === '1'; });
+    if (P.sort) st.sort = P.sort;
+    if (Object.keys(P).length) st.shown = page;
+    if (!cfg.sorts.some(x => x.key === st.sort)) st.sort = cfg.sorts[0].key;
+
+    const arr = v => (Array.isArray(v) ? v : [v]).filter(x => x !== '' && x !== null && x !== undefined);
+    const root = h('div', { class: 'listview' });
+    const input = h('input', { class: 'input', type: 'text', placeholder: cfg.placeholder || 'Search', value: st.q, 'aria-label': cfg.placeholder || 'Search', autocomplete: 'off', spellcheck: 'false' });
+    const clearQ = h('button', { class: 'btn quiet icon sm clear', type: 'button', 'aria-label': 'Clear search', hidden: !st.q }, A.icon('x', 14));
+    const toolbar = h('div', { class: 'toolbar' }, h('div', { class: 'search' }, A.icon('search', 16), input, clearQ));
+
+    const selects = {};
+    (cfg.filters || []).forEach(f => {
+      const counts = new Map();
+      cfg.items.forEach(it => arr(f.values(it)).forEach(v => counts.set(v, (counts.get(v) || 0) + 1)));
+      if (st.f[f.key] && !counts.has(st.f[f.key])) counts.set(st.f[f.key], 0);
+      const rank = v => { const i = f.order ? f.order.indexOf(v) : -1; return i < 0 ? 999 : i; };
+      const opts = [...counts.entries()].sort((a, b) => rank(a[0]) - rank(b[0]) || b[1] - a[1] || String(a[0]).localeCompare(String(b[0])));
+      const sel = h('select', { class: 'input', 'aria-label': f.label }, h('option', { value: '' }, 'All ' + f.label.toLowerCase()), opts.map(([v, n]) => h('option', { value: v }, (f.fmt ? f.fmt(v) : v) + ' (' + n + ')')));
+      sel.value = st.f[f.key] || '';
+      sel.addEventListener('change', () => { st.f[f.key] = sel.value; st.shown = page; draw(); });
+      selects[f.key] = sel;
+      toolbar.appendChild(sel);
+    });
+    const sortSel = h('select', { class: 'input', 'aria-label': 'Sort order' }, cfg.sorts.map(x => h('option', { value: x.key }, x.label)));
+    sortSel.value = st.sort;
+    sortSel.addEventListener('change', () => { st.sort = sortSel.value; st.shown = page; draw(); });
+    toolbar.appendChild(sortSel);
+    root.appendChild(toolbar);
+
+    const toggleBtns = {};
+    if ((cfg.toggles || []).length) {
+      const bar = h('div', { class: 'togglebar' });
+      cfg.toggles.forEach(t => {
+        const b = h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(!!st.on[t.key]) }, t.label);
+        b.addEventListener('click', () => { st.on[t.key] = !st.on[t.key]; b.setAttribute('aria-pressed', String(!!st.on[t.key])); st.shown = page; draw(); });
+        toggleBtns[t.key] = b; bar.appendChild(b);
+      });
+      root.appendChild(bar);
+    }
+
+    const count = h('span', null);
+    const tools = h('span', { style: { display: 'inline-flex', gap: '6px', alignItems: 'center' } });
+    const resetBtn = h('button', { class: 'linkbtn', type: 'button', hidden: true }, 'Clear filters');
+    const csvBtn = cfg.csv ? h('button', { class: 'btn quiet sm', type: 'button', title: 'Download the rows currently shown as a CSV file' }, A.icon('download', 14), 'Export CSV') : null;
+    tools.appendChild(resetBtn); if (csvBtn) tools.appendChild(csvBtn);
+    root.appendChild(h('div', { class: 'countline' }, count, tools));
+    const list = h('div', { class: 'list' });
+    const more = h('div', { class: 'more', hidden: true });
+    root.appendChild(list); root.appendChild(more);
+
+    function terms() { return A.norm(st.q).split(/\s+/).filter(Boolean); }
+    function result() {
+      const T = terms();
+      let items = cfg.items;
+      if (T.length) items = items.filter(it => T.every(t => it.text.indexOf(t) >= 0));
+      (cfg.filters || []).forEach(f => { const v = st.f[f.key]; if (v) items = items.filter(it => arr(f.values(it)).includes(v)); });
+      (cfg.toggles || []).forEach(t => { if (st.on[t.key]) items = items.filter(t.test); });
+      const cmp = cfg.sorts.find(x => x.key === st.sort).cmp;
+      return items.slice().sort(cmp);
+    }
+    function active() { return !!(st.q || Object.values(st.f).some(Boolean) || Object.values(st.on).some(Boolean)); }
+    let current = [];
+    function draw() {
+      current = result();
+      const T = terms(); const re = A.termsRe(T);
+      A.clear(list);
+      const ctx = { re, terms: T };
+      current.slice(0, st.shown).forEach(it => list.appendChild(cfg.row(it, ctx)));
+      if (!current.length) list.appendChild(A.emptyState('Nothing matches', cfg.emptyText || 'Try fewer words or clear a filter.'));
+      const total = cfg.items.length;
+      count.textContent = current.length === total ? 'Showing ' + A.n(Math.min(st.shown, current.length)) + ' of ' + A.n(total) + ' ' + cfg.noun : A.n(current.length) + ' of ' + A.n(total) + ' ' + cfg.noun + ' match' + (current.length === 1 ? 'es' : '');
+      resetBtn.hidden = !active();
+      clearQ.hidden = !st.q;
+      A.clear(more);
+      if (current.length > st.shown) {
+        const b = h('button', { class: 'btn', type: 'button' }, 'Show ' + Math.min(page, current.length - st.shown) + ' more (' + A.n(current.length - st.shown) + ' left)');
+        b.addEventListener('click', () => { st.shown += page; draw(); });
+        more.appendChild(b); more.hidden = false;
+      } else more.hidden = true;
+    }
+    input.addEventListener('input', A.debounce(() => { st.q = input.value; st.shown = page; draw(); }, 120));
+    clearQ.addEventListener('click', () => { input.value = ''; st.q = ''; st.shown = page; draw(); input.focus(); });
+    resetBtn.addEventListener('click', () => {
+      st.q = ''; st.f = {}; st.on = {}; st.shown = page; input.value = '';
+      Object.values(selects).forEach(x => { x.value = ''; });
+      Object.values(toggleBtns).forEach(b => b.setAttribute('aria-pressed', 'false'));
+      draw();
+    });
+    if (csvBtn) csvBtn.addEventListener('click', () => A.downloadCsv(cfg.csv.name, cfg.csv.cols.map(c => c[0]), current.map(it => cfg.csv.cols.map(c => c[1](it)))));
+    draw();
+    return root;
+  };
+})();
+
+/* ============================================================
+   Screens, part 1: overview, statistics, search.
+   ============================================================ */
+(function () {
+  const A = (globalThis.A = globalThis.A || {});
+  const h = A.h;
+  A.views = A.views || {};
+
+  const plural = A.plural;
+  const byNewest = (a, b) => (b.dateMs || 0) - (a.dateMs || 0) || b.row - a.row;
+
+  function statTile(label, value, note, onClick) {
+    const el = h('div', { class: 'stat' + (onClick ? ' click' : ''), tabindex: onClick ? '0' : null, role: onClick ? 'link' : null },
+      h('div', { class: 'lbl' }, label), h('div', { class: 'val' }, value), note ? h('div', { class: 'note' }, note) : null);
+    if (onClick) { el.addEventListener('click', onClick); el.addEventListener('keydown', e => { if (e.key === 'Enter') onClick(); }); }
+    return el;
+  }
+  function fieldBars(items, onClickKey) {
+    return A.hbars(items.map(([label, n]) => ({ label, value: n, sub: 'postings', onClick: onClickKey ? () => onClickKey(label) : null })), { unit: 'postings', labelName: 'Group', valueName: 'Postings' });
+  }
+  function miniPosting(p) {
+    return h('div', { class: 'mini' },
+      h('div', { class: 't' }, p.url ? A.link(p.url, p.university, 'ext') : p.university),
+      h('time', null, A.fmtDate(p.dateMs, false)),
+      h('div', { class: 's' }, [p.department, p.location].filter(Boolean).join(', ')));
+  }
+  function miniThread(c) {
+    const first = c.messages[0];
+    return h('div', { class: 'mini' },
+      h('div', { class: 't' }, first.length > 150 ? first.slice(0, 149) + '…' : first),
+      h('time', null, c.dateMs ? A.fmtDate(c.dateMs, false) : ''),
+      h('div', { class: 's' }, c.messages.length > 1 ? plural(c.messages.length - 1, 'reply', 'replies') : 'No replies yet'));
+  }
+
+  /* ---------------- Overview ---------------- */
+  A.views.overview = function () {
+    const D = A.db, U = A.UI;
+    const k = A.kpis(D, U.prevVisit, U.keywords);
+    const root = h('div', null);
+    root.appendChild(A.pageHead('The market this season', 'Read from the community spreadsheet: what is being advertised, who is hearing back, and what people are saying.'));
+
+    root.appendChild(h('div', { class: 'hero' },
+      h('div', { class: 'big' }, A.n(k.postings)),
+      h('p', { class: 'words' }, 'job postings are on the board. ',
+        h('span', null, plural(k.postingsWeek, 'was', 'were') + ' added in the past week' + (k.postingsNew !== null ? ', ' + k.postingsNew + ' since your last visit.' : '.')))));
+
+    const kwOn = U.keywords.length > 0;
+    root.appendChild(h('div', { class: 'stats' },
+      kwOn ? statTile('Matching your keywords', A.n(k.matching), k.matchingWeek + ' added this week', () => A.go('postings', { kw: '1' })) : statTile('Keyword watch', 'Off', 'Add keywords in Settings to highlight postings', () => document.dispatchEvent(new CustomEvent('fma:settings'))),
+      statTile('Interview invitations logged', A.n(k.interviews), k.remote + ' remote, ' + k.onsite + ' onsite', () => A.go('applications')),
+      statTile('Offers in the application log', A.n(k.offers), k.acceptedOffers + ' accepted ' + (k.acceptedOffers === 1 ? 'offer is' : 'offers are') + ' listed on the offers page', () => A.go('offers')),
+      statTile('Conversations', A.n(k.threads), k.threadsWeek + ' in the past week', () => A.go('community'))));
+
+    // weekly postings + tile map
+    const weekly = A.weekly(D.postings.map(p => p.dateMs), D.win);
+    const stateCounts = A.count(D.postings, p => p.state);
+    const noState = D.postings.filter(p => !p.state).length;
+    const g1 = h('div', { class: 'grid g21', style: { marginTop: '16px' } });
+    g1.appendChild(A.chartCard({
+      title: 'Postings added each week', sub: 'Weeks start on Monday. The latest week is still in progress.',
+      draw: w => A.columns(weekly.map(x => ({ label: A.fmtDate(x.t, false), v: x.v, tipTitle: 'Week of ' + A.fmtDate(x.t) })), w, { unit: 'postings', xName: 'Week starting', valueName: 'Postings added', aria: 'Postings added per week', height: 330 }),
+    }));
+    g1.appendChild(A.chartCard({
+      title: 'Where the postings are', sub: 'One square per state. ' + A.n(noState) + ' postings are outside the US or have no state.',
+      draw: w => A.tileMap(stateCounts, Math.min(w, 460), { unit: 'postings', onClick: code => A.go('postings', { state: code }), aria: 'US states by number of postings' }),
+    }));
+    root.appendChild(g1);
+
+    // fields + response mix
+    const fields = A.top(A.count(D.postings, p => (p.field === 'Not stated' ? null : p.field)), 10);
+    const mix = A.responseMix(D.apps);
+    const days = D.apps.map(a => a.daysToResponse).filter(x => x !== null);
+    const g2 = h('div', { class: 'grid g2', style: { marginTop: '16px' } });
+    g2.appendChild(A.chartCard({ title: 'Fields that are hiring', sub: 'Postings grouped by discipline wording. Select a bar to read those postings.', draw: () => fieldBars(fields, label => A.go('postings', { field: label })) }));
+    g2.appendChild(A.chartCard({
+      title: 'How applicants are hearing back', sub: 'Responses people have logged on the applications tab.',
+      draw: () => {
+        const seg = A.segBar(mix.map(m => ({ label: m.kind, value: m.n, color: A.RESP_COLOR[m.kind], ink: A.RESP_INK[m.kind], onClick: () => A.go('applications', { kind: m.kind }) })), { name: 'Response', onClick: true, aria: 'Response types' });
+        const extra = h('p', { class: 'note-line', style: { marginTop: '14px' } }, days.length ? 'The median wait for a first reply is ' + Math.round(A.median(days)) + ' days (' + A.n(days.length) + ' applications with both dates).' : '');
+        return { node: h('div', null, seg.node, extra), table: seg.table };
+      },
+    }));
+    root.appendChild(g2);
+
+    // newest postings + latest conversations
+    const newest = D.postings.slice().sort(byNewest).slice(0, 7);
+    const latest = D.comments.slice().sort((a, b) => b.row - a.row).slice(0, 5);
+    const g3 = h('div', { class: 'grid g2', style: { marginTop: '16px' } });
+    const p1 = h('section', { class: 'panel' }, h('header', null, h('h3', null, 'Newest postings'), h('a', { href: '#/postings' }, 'See all')), newest.map(miniPosting));
+    const p2 = h('section', { class: 'panel' }, h('header', null, h('h3', null, 'Latest conversations'), h('a', { href: '#/community' }, 'Read more')), latest.map(miniThread));
+    g3.appendChild(p1); g3.appendChild(p2);
+    root.appendChild(g3);
+    return root;
+  };
+
+  /* ---------------- Statistics ---------------- */
+  A.views.statistics = function () {
+    const D = A.db;
+    const k = A.kpis(D, A.UI.prevVisit, A.UI.keywords);
+    const root = h('div', null, A.pageHead('Statistics', 'Counts and trends drawn from every tab. Each chart has a Table button that shows the numbers behind it.'));
+
+    /* Postings */
+    const sec1 = h('section', { class: 'section' }, h('h2', null, 'Job postings'));
+    const cum = A.cumulative(D.postings.map(p => p.dateMs), D.win);
+    const g = h('div', { class: 'grid g2', style: { marginTop: '14px' } });
+    g.appendChild(A.chartCard({ title: 'Postings collected so far', sub: 'Running total by the date each posting was added.' + (D.postings.some(p => p.dateMs === null) ? ' ' + A.plural(D.postings.filter(p => p.dateMs === null).length, 'posting') + ' without a date ' + (D.postings.filter(p => p.dateMs === null).length === 1 ? 'is' : 'are') + ' left out.' : ''), draw: w => (cum.length ? A.areaLine(cum, w, { unit: 'postings', valueName: 'Total postings', aria: 'Cumulative postings' }) : { node: A.emptyState('No dated postings yet'), table: { head: [], rows: [] } }) }));
+    g.appendChild(A.chartCard({ title: 'Fields', sub: 'Every posting grouped by discipline wording.', draw: () => fieldBars(A.top(A.count(D.postings, p => p.field), 16), label => A.go('postings', { field: label })) }));
+    g.appendChild(A.chartCard({ title: 'Position level', draw: () => fieldBars(A.top(A.count(D.postings, p => p.rankKind), 8), label => A.go('postings', { rank: label })) }));
+    g.appendChild(A.chartCard({ title: 'States with the most postings', draw: () => A.hbars(A.top(A.count(D.postings, p => p.state), 12).map(([c, n]) => ({ label: A.STATES[c], value: n, sub: 'postings', onClick: () => A.go('postings', { state: c }) })), { unit: 'postings', labelName: 'State', valueName: 'Postings' }) }));
+    g.appendChild(A.chartCard({ title: 'Institution type tag', sub: 'The category column, where editors filled it in.', draw: () => fieldBars(A.top(A.count(D.postings, p => p.categoryLabel), 8), label => A.go('postings', { cat: label })) }));
+    sec1.appendChild(g);
+    root.appendChild(sec1);
+
+    /* Responses */
+    const sec2 = h('section', { class: 'section' }, h('h2', null, 'Responses from search committees'),
+      h('p', { class: 'lede' }, 'These come from the applications tab, where people log the replies they received. Because people choose what to post, this shows what is happening, not how likely an application is to succeed. For rates, see the applicant benchmarks below.'));
+    const days = D.apps.map(a => a.daysToResponse).filter(x => x !== null);
+    sec2.appendChild(h('div', { class: 'stats' },
+      statTile('Median days to hear back', days.length ? String(Math.round(A.median(days))) : '–', A.n(days.length) + ' applications with both dates'),
+      statTile('Interview invitations', A.n(k.interviews), k.remote + ' remote, ' + k.onsite + ' onsite'),
+      statTile('Rejections logged', A.n((D.apps.filter(a => a.kind === 'Rejection')).length), 'Many rejections are never posted'),
+      statTile('Offers logged', A.n(k.offers), 'Verbal and written')));
+    const rbm = A.responsesByMonth(D.apps, D.win);
+    const g2 = h('div', { class: 'grid g2', style: { marginTop: '16px' } });
+    g2.appendChild(A.chartCard({
+      title: 'Responses by month', sub: 'Counted by the date of the reply, or the date added when no reply date is given.',
+      draw: w => A.stacked(rbm.months.map(t => ({ label: A.MON[new Date(t).getUTCMonth()], tipTitle: A.fmtMonth(t) })), A.RESP_ORDER.map(kind => ({ name: kind, color: A.RESP_COLOR[kind], values: rbm.byKind[kind] })), w, { xName: 'Month', aria: 'Responses by month and type' }),
+    }));
+    g2.appendChild(A.chartCard({
+      title: 'Institutions sending the most interview invitations', sub: 'Remote and onsite invitations combined.',
+      draw: () => A.hbars(A.topInterviewers(D.apps, 10).map(x => ({ label: x.name, value: x.n, sub: 'interview invitations' })), { unit: 'invitations', labelName: 'Institution', valueName: 'Invitations' }),
+    }));
+    sec2.appendChild(g2);
+    root.appendChild(sec2);
+
+    /* Applicant benchmarks */
+    const B = A.benchmarks(D.stats);
+    const sec3 = h('section', { class: 'section' }, h('h2', null, 'Applicant benchmarks'),
+      h('p', { class: 'lede' }, 'Self-reported totals from the applicant stats tab (' + B.n + ' respondents, ' + B.ongoing + ' still applying). Small, voluntary samples lean toward people with news to share, so read these as context, not as odds.'));
+    sec3.appendChild(h('div', { class: 'stats' },
+      statTile('Median applications sent', B.medApps === null ? '–' : String(Math.round(B.medApps)), 'Half sent fewer, half sent more'),
+      statTile('Median interviews reported', B.medInterviews === null ? '–' : String(Math.round(B.medInterviews)), 'Remote and onsite combined'),
+      statTile('Reached any interview', A.pct(B.withInterview), 'of respondents'),
+      statTile('Received an offer', A.pct(B.withOffer), 'of respondents')));
+    const g3 = h('div', { class: 'grid g2', style: { marginTop: '16px' } });
+    g3.appendChild(A.chartCard({
+      title: 'How far respondents got', sub: 'Share of respondents reaching each stage.',
+      draw: () => A.hbars([['Heard back from at least one department', B.withReply], ['Reached any interview', B.withInterview], ['Reached an onsite visit', B.withOnsite], ['Received an offer', B.withOffer]].map(([label, v]) => ({ label, value: Math.round((v || 0) * 100), sub: 'of respondents' })), { fmt: v => v + '%', labelName: 'Stage', valueName: 'Share of respondents' }),
+    }));
+    g3.appendChild(A.chartCard({
+      title: 'Number of applications sent', sub: 'Respondents by applications sent.',
+      draw: w => A.columns(B.hist.map(x => ({ label: x.label, v: x.v })), w, { unit: 'respondents', xName: 'Applications sent', valueName: 'Respondents', aria: 'Respondents by number of applications' }),
+    }));
+    g3.appendChild(A.chartCard({
+      title: 'Applications sent against interviews', sub: 'Each dot is one respondent. Hover to see the details.',
+      draw: w => A.scatter(B.points, w, { xName: 'Applications sent', yName: 'Interviews reported', aria: 'Applications sent versus interviews reported' }),
+    }));
+    g3.appendChild(A.chartCard({
+      title: 'Institution types applied to', sub: 'Respondents can list more than one.',
+      draw: () => A.hbars(B.types.map(([label, n]) => ({ label, value: n, sub: 'respondents' })), { unit: 'respondents', labelName: 'Type', valueName: 'Respondents' }),
+    }));
+    sec3.appendChild(g3);
+    const cyc = h('section', { class: 'card', style: { marginTop: '16px' } },
+      h('header', { class: 'card-head' }, h('div', null, h('h3', null, 'By search cycle'), h('p', { class: 'sub' }, 'How many times a respondent has been on the market.'))),
+      h('div', { class: 'table-wrap' }, h('table', { class: 'plain-table' },
+        h('thead', null, h('tr', null, ['Cycle', 'Respondents', 'Median applications', 'Any interview', 'Any offer'].map((t, i) => h('th', { class: i ? 'num' : '' }, t)))),
+        h('tbody', null, B.cycles.map(c => h('tr', null, h('td', null, c.cycle), h('td', { class: 'num' }, A.n(c.n)), h('td', { class: 'num' }, c.medApps === null ? '–' : String(Math.round(c.medApps))), h('td', { class: 'num' }, A.pct(c.interview)), h('td', { class: 'num' }, A.pct(c.offer))))))));
+    sec3.appendChild(cyc);
+    root.appendChild(sec3);
+
+    /* Negotiations */
+    const sRows = A.moneyRows(D.nego, 'startupOfferedNum', 'startupGrantedNum');
+    const wRows = A.moneyRows(D.nego, 'salaryOfferedNum', 'salaryGrantedNum');
+    const sec4 = h('section', { class: 'section' }, h('h2', null, 'Negotiated packages'),
+      h('p', { class: 'lede' }, 'Free-text entries read on a best-effort basis (the first amount in each cell). Some startup figures include salary support, so check the original wording on the Negotiations page before comparing.'));
+    const g4 = h('div', { class: 'grid g2' });
+    const dumb = (rows, name) => w => A.dumbbell(rows, w, { fmt: A.money, aName: 'Offered', bName: 'Granted', aColor: 'var(--s1)', bColor: 'var(--s2)', aria: name });
+    g4.appendChild(A.chartCard({ title: 'Startup packages', sub: 'First offer and final package, per entry.', draw: w => (sRows.length ? dumb(sRows, 'Startup offered and granted')(w) : { node: A.emptyState('No startup figures yet'), table: { head: [], rows: [] } }) }));
+    g4.appendChild(A.chartCard({ title: 'Base salary', sub: 'First offer and final salary, per entry.', draw: w => (wRows.length ? dumb(wRows, 'Salary offered and granted')(w) : { node: A.emptyState('No salary figures yet'), table: { head: [], rows: [] } }) }));
+    sec4.appendChild(g4);
+    root.appendChild(sec4);
+
+    /* Community */
+    const weeklyC = A.weekly(D.comments.map(c => c.dateMs), D.win);
+    const sec5 = h('section', { class: 'section' }, h('h2', null, 'Community activity'));
+    sec5.appendChild(h('div', { class: 'grid', style: { marginTop: '14px' } }, A.chartCard({
+      title: 'Conversations started each week', sub: 'From the anonymous comments tab.',
+      draw: w => A.columns(weeklyC.map(x => ({ label: A.fmtDate(x.t, false), v: x.v, tipTitle: 'Week of ' + A.fmtDate(x.t) })), w, { unit: 'conversations', xName: 'Week starting', valueName: 'Conversations', aria: 'Conversations per week' }),
+    })));
+    root.appendChild(sec5);
+    return root;
+  };
+
+  /* ---------------- Search across everything ---------------- */
+  function snippet(text, terms, len) {
+    len = len || 180;
+    const low = text.toLowerCase();
+    let at = -1;
+    for (const t of terms) { const i = low.indexOf(t); if (i >= 0 && (at < 0 || i < at)) at = i; }
+    if (at < 0 || text.length <= len) return text.length > len ? text.slice(0, len - 1) + '…' : text;
+    const start = Math.max(0, at - 50);
+    return (start > 0 ? '…' : '') + text.slice(start, start + len) + (start + len < text.length ? '…' : '');
+  }
+  A.views.search = function (params) {
+    const D = A.db, q = (params.q || '').trim();
+    const terms = A.norm(q).split(/\s+/).filter(Boolean);
+    const re = A.termsRe(terms);
+    const root = h('div', null, A.pageHead(q ? 'Results for “' + q + '”' : 'Search', q ? null : 'Type in the search box at the top to look across postings, applications, conversations, culture notes and locations.'));
+    if (!terms.length) return root;
+    const sections = [
+      { title: 'Job postings', view: 'postings', items: D.postings, mini: p => h('div', { class: 'mini' }, h('div', { class: 't' }, p.url ? A.link(p.url, p.university, 'ext') : A.rich(p.university, re)), h('time', null, A.fmtDate(p.dateMs, false)), h('div', { class: 's' }, A.rich([p.department, p.location, p.discipline].filter(Boolean).join(', '), re))) },
+      { title: 'Applications', view: 'applications', items: D.apps, mini: a => h('div', { class: 'mini' }, h('div', { class: 't' }, A.rich(a.institution, re)), h('time', null, A.fmtDate(a.addedMs, false)), h('div', { class: 's' }, A.badge(a.kind, A.RESP_COLOR[a.kind] || 'var(--axis)')), a.noteList.length ? h('div', { class: 'q' }, A.rich(snippet(a.noteList.join(' '), terms), re)) : null) },
+      { title: 'No-response reports', view: 'noresponse', items: D.noresp, mini: r => h('div', { class: 'mini' }, h('div', { class: 't' }, A.rich(r.institution, re)), h('time', null, A.fmtDate(r.dateMs, false)), h('div', { class: 's' }, A.rich([r.department, r.location].filter(Boolean).join(', '), re))) },
+      { title: 'Conversations', view: 'community', items: D.comments, mini: c => h('div', { class: 'mini' }, h('div', { class: 't' }, A.rich(snippet(c.messages.join(' – '), terms, 200), re)), h('time', null, c.dateMs ? A.fmtDate(c.dateMs, false) : '')) },
+      { title: 'Institutional culture', view: 'culture', items: D.culture, mini: c => h('div', { class: 'mini' }, h('div', { class: 't' }, A.rich(c.institution, re)), h('time', null, ''), h('div', { class: 'q' }, A.rich(snippet([c.question].concat(c.notes).join(' '), terms), re))) },
+      { title: 'Locations', view: 'locations', items: D.locs, mini: l => h('div', { class: 'mini' }, h('div', { class: 't' }, A.rich(l.city, re)), h('time', null, ''), h('div', { class: 'q' }, A.rich(snippet([l.question, l.pros, l.cons].concat(l.notes).join(' '), terms), re))) },
+      { title: 'Negotiated packages', view: 'negotiations', items: D.nego, mini: n => h('div', { class: 'mini' }, h('div', { class: 't' }, A.rich(n.label, re)), h('time', null, n.dateMs ? A.fmtDate(n.dateMs, false) : ''), h('div', { class: 's' }, A.rich(n.notes.join(' ').slice(0, 160), re))) },
+    ];
+    let total = 0;
+    const out = h('div', { class: 'grid', style: { gap: '16px' } });
+    sections.forEach(sec => {
+      const hits = sec.items.filter(it => terms.every(t => it.text.indexOf(t) >= 0));
+      if (!hits.length) return;
+      total += hits.length;
+      const ordered = hits.slice().sort((a, b) => (b.dateMs || b.addedMs || 0) - (a.dateMs || a.addedMs || 0) || b.row - a.row);
+      out.appendChild(h('section', { class: 'panel' },
+        h('header', null, h('h3', null, sec.title + ' (' + A.n(hits.length) + ')'), h('button', { class: 'linkbtn', type: 'button', onClick: () => A.go(sec.view, { q }) }, 'Show all in ' + sec.title.toLowerCase())),
+        ordered.slice(0, 5).map(sec.mini)));
+    });
+    if (!total) out.appendChild(A.emptyState('No matches for “' + q + '”', 'Try a shorter word, or part of an institution name.'));
+    root.appendChild(out);
+    return root;
+  };
+})();
+
+/* ============================================================
+   Screens, part 2: the reading and browsing screens.
+   ============================================================ */
+(function () {
+  const A = (globalThis.A = globalThis.A || {});
+  const h = A.h;
+  A.views = A.views || {};
+
+  const newest = (a, b) => (b.dateMs || 0) - (a.dateMs || 0) || b.row - a.row;
+  const oldest = (a, b) => (a.dateMs === null ? 1 : b.dateMs === null ? -1 : a.dateMs - b.dateMs) || a.row - b.row;
+  const alpha = key => (a, b) => String(a[key] || '').localeCompare(String(b[key] || ''));
+  const stateName = c => A.STATES[c] || c;
+  const joinText = arr => arr.filter(Boolean).join(', ');
+
+  /* ---------------- Job postings ---------------- */
+  A.views.postings = function (params) {
+    const D = A.db, U = A.UI;
+    const k = A.kpis(D, U.prevVisit, U.keywords);
+    const root = h('div', null, A.pageHead('Job postings', 'Faculty openings gathered by the community. Open a posting to read the ad. Comments left by other visitors appear under each entry.'));
+    const kw = U.keywords.length ? 'Matches my keywords' : null;
+    root.appendChild(A.listView({
+      id: 'postings', items: D.postings, noun: 'postings', params,
+      placeholder: 'Search institution, field, city or comment',
+      filters: [
+        { key: 'field', label: 'Fields', values: p => p.field },
+        { key: 'rank', label: 'Levels', values: p => p.rankKind },
+        { key: 'state', label: 'States', values: p => p.state || '', fmt: stateName },
+        { key: 'cat', label: 'Types', values: p => p.categoryLabel },
+      ],
+      toggles: [
+        { key: 'week', label: 'Added in the past 7 days', test: k.isRecent },
+        U.prevVisit ? { key: 'new', label: 'New since my last visit', test: k.isNew } : null,
+        kw ? { key: 'kw', label: kw, test: k.match } : null,
+        { key: 'saved', label: 'Saved', test: p => U.saved.has(A.postKey(p)) },
+        { key: 'notes', label: 'Has comments', test: p => p.notes.length > 0 },
+      ].filter(Boolean),
+      sorts: [{ key: 'new', label: 'Newest first', cmp: newest }, { key: 'old', label: 'Oldest first', cmp: oldest }, { key: 'az', label: 'Institution A to Z', cmp: alpha('university') }],
+      csv: { name: 'faculty-postings.csv', cols: [['Date added', p => (p.dateMs ? new Date(p.dateMs).toISOString().slice(0, 10) : p.date)], ['Institution', p => p.university], ['Department', p => p.department], ['Location', p => p.location], ['Discipline', p => p.discipline], ['Level', p => p.rank], ['Type', p => p.category], ['Link', p => p.url], ['Comments', p => p.notes.join(' | ')]] },
+      row: (p, ctx) => {
+        const key = A.postKey(p);
+        const star = h('button', { class: 'star', type: 'button', 'aria-pressed': String(U.saved.has(key)), title: 'Save this posting (kept in this browser only)', 'aria-label': 'Save ' + p.university }, A.icon('star', 18, U.saved.has(key)));
+        star.addEventListener('click', () => { A.toggleSaved(key); const on = U.saved.has(key); star.setAttribute('aria-pressed', String(on)); A.clear(star); star.appendChild(A.icon('star', 18, on)); });
+        const chips = h('div', { class: 'chips' },
+          k.match(p) ? A.chip('Matches your keywords', 'accent') : null,
+          p.field !== 'Not stated' ? A.chip(p.field, '', () => A.go('postings', { field: p.field })) : null,
+          p.rankKind !== 'Not stated' ? A.chip(p.rank && p.rank.length < 34 ? p.rank : p.rankKind) : null,
+          p.category ? A.chip(p.category) : null,
+          p.location ? A.chip(p.location, '', p.state ? () => A.go('postings', { state: p.state }) : null) : null);
+        return h('article', { class: 'row' },
+          star,
+          h('div', { class: 'row-main' },
+            h('h4', { class: 'row-title' }, A.rich(p.university || 'Untitled posting', ctx.re), k.isNew(p) ? h('span', { class: 'pill-new' }, 'New') : null),
+            p.department ? h('p', { class: 'row-sub' }, A.rich(p.department, ctx.re)) : null,
+            chips, A.notesBlock(p.notes, ctx.re, 2)),
+          h('div', { class: 'row-side' }, h('time', null, A.fmtDate(p.dateMs)), p.url ? A.extButton(p.url) : h('span', null, 'No link')));
+      },
+    }));
+    return root;
+  };
+
+  /* ---------------- Applications ---------------- */
+  A.views.applications = function (params) {
+    const D = A.db;
+    const root = h('div', null, A.pageHead('Applications and replies', 'What people reported hearing back from each institution: interviews, rejections, requests for letters and offers. Entries are posted voluntarily and anonymously.'));
+    const dayText = a => {
+      const bits = [];
+      if (a.submittedMs) bits.push('Submitted ' + A.fmtDate(a.submittedMs));
+      else if (a.submitted) bits.push('Submitted ' + a.submitted);
+      if (a.respondedMs) bits.push('heard back ' + A.fmtDate(a.respondedMs) + (a.daysToResponse !== null ? ' (after ' + A.plural(a.daysToResponse, 'day') + ')' : ''));
+      else if (a.responseDate) bits.push('heard back ' + a.responseDate);
+      return bits.join(', ');
+    };
+    root.appendChild(A.listView({
+      id: 'applications', items: D.apps, noun: 'replies', params,
+      placeholder: 'Search institution, department, field, city or note',
+      filters: [
+        { key: 'kind', label: 'Replies', values: a => a.kind, order: A.RESP_ORDER },
+        { key: 'rank', label: 'Levels', values: a => a.rankKind },
+        { key: 'state', label: 'States', values: a => a.state || '', fmt: stateName },
+        { key: 'field', label: 'Fields', values: a => a.field },
+      ],
+      toggles: [{ key: 'notes', label: 'Has notes', test: a => a.noteList.length > 0 }, { key: 'link', label: 'Has job ad link', test: a => !!a.url }],
+      sorts: [
+        { key: 'new', label: 'Newest first', cmp: (a, b) => (b.addedMs || 0) - (a.addedMs || 0) || b.row - a.row },
+        { key: 'old', label: 'Oldest first', cmp: (a, b) => (a.addedMs === null ? 1 : b.addedMs === null ? -1 : a.addedMs - b.addedMs) || a.row - b.row },
+        { key: 'fast', label: 'Fastest reply', cmp: (a, b) => (a.daysToResponse === null ? 1e9 : a.daysToResponse) - (b.daysToResponse === null ? 1e9 : b.daysToResponse) },
+        { key: 'az', label: 'Institution A to Z', cmp: alpha('institution') },
+      ],
+      csv: { name: 'faculty-applications.csv', cols: [['Added', a => a.date], ['Institution', a => a.institution], ['Department', a => a.department], ['Specialty', a => a.specialty], ['Location', a => a.location], ['Level', a => a.position], ['Reply', a => a.response], ['Submitted', a => a.submitted], ['Reply date', a => a.responseDate], ['Notes', a => a.noteList.join(' | ')], ['Job ad', a => a.url]] },
+      row: (a, ctx) => h('article', { class: 'row nostar' },
+        h('div', { class: 'row-main' },
+          h('h4', { class: 'row-title' }, A.rich(a.institution, ctx.re)),
+          joinText([a.department, a.specialty]) ? h('p', { class: 'row-sub' }, A.rich(joinText([a.department, a.specialty]), ctx.re)) : null,
+          h('div', { class: 'chips' },
+            h('span', { class: 'badge' }, h('i', { style: { background: A.RESP_COLOR[a.kind] || 'var(--axis)' } }), a.response || a.kind),
+            a.rankKind !== 'Not stated' ? A.chip(a.rankKind) : null,
+            a.location ? A.chip(a.location) : null),
+          dayText(a) ? h('p', { class: 'row-sub', style: { marginTop: '8px', fontSize: '13px' } }, dayText(a)) : null,
+          A.notesBlock(a.noteList, ctx.re, 2)),
+        h('div', { class: 'row-side' }, h('time', null, a.addedMs ? 'Added ' + A.fmtDate(a.addedMs) : ''), a.url ? A.extButton(a.url, 'Job ad') : null)),
+    }));
+    return root;
+  };
+
+  /* ---------------- No response ---------------- */
+  A.views.noresponse = function (params) {
+    const D = A.db;
+    const root = h('div', null, A.pageHead('No response yet', 'Applications that have gone quiet. Use this to check whether silence from a department is normal this season.'));
+    if (D.noRespHint) root.appendChild(h('div', { class: 'banner info' }, h('div', null, h('b', null, 'Posting etiquette. '), D.noRespHint.charAt(0) + D.noRespHint.slice(1).toLowerCase() + '.')));
+    root.appendChild(A.listView({
+      id: 'noresponse', items: D.noresp, noun: 'reports', params,
+      placeholder: 'Search institution, department, city or comment',
+      filters: [{ key: 'state', label: 'States', values: r => r.state || '', fmt: stateName }, { key: 'rank', label: 'Levels', values: r => A.rankBucket(r.rank) }],
+      toggles: [{ key: 'notes', label: 'Has comments', test: r => r.notes.length > 0 }],
+      sorts: [{ key: 'new', label: 'Newest first', cmp: newest }, { key: 'wait', label: 'Longest since deadline', cmp: (a, b) => (a.deadlineMs === null ? 1 : b.deadlineMs === null ? -1 : a.deadlineMs - b.deadlineMs) }, { key: 'az', label: 'Institution A to Z', cmp: alpha('institution') }],
+      csv: { name: 'faculty-no-response.csv', cols: [['Date', r => r.date], ['Institution', r => r.institution], ['Deadline', r => r.deadline], ['Department', r => r.department], ['Level', r => r.rank], ['Location', r => r.location], ['Job ad', r => r.url], ['Comments', r => r.notes.join(' | ')]] },
+      row: (r, ctx) => {
+        const since = A.daysSince(r.deadlineMs);
+        return h('article', { class: 'row nostar' },
+          h('div', { class: 'row-main' },
+            h('h4', { class: 'row-title' }, A.rich(r.institution, ctx.re)),
+            r.department ? h('p', { class: 'row-sub' }, A.rich(r.department, ctx.re)) : null,
+            h('div', { class: 'chips' }, r.rank ? A.chip(r.rank) : null, r.location ? A.chip(r.location) : null,
+              r.deadlineMs ? A.chip('Deadline ' + A.fmtDate(r.deadlineMs) + (since !== null && since >= 0 ? ' (' + A.plural(since, 'day') + ' ago)' : '')) : (r.deadline ? A.chip('Deadline: ' + r.deadline) : null)),
+            A.notesBlock(r.notes, ctx.re, 2)),
+          h('div', { class: 'row-side' }, h('time', null, r.dateMs ? 'Posted ' + A.fmtDate(r.dateMs) : ''), r.url ? A.extButton(r.url, 'Job ad') : null));
+      },
+    }));
+    return root;
+  };
+
+  /* ---------------- Offers and searches (short lists, no controls) ---------------- */
+  A.views.offers = function () {
+    const D = A.db;
+    const root = h('div', null, A.pageHead('Offers and search changes', 'Accepted offers reported by candidates, plus searches that have been frozen, cancelled or have failed.'));
+    const block = (title, lede, items, row) => {
+      const sec = h('section', { class: 'section', style: { marginTop: '28px' } }, h('h2', null, title + ' (' + items.length + ')'), lede ? h('p', { class: 'lede' }, lede) : null);
+      if (!items.length) sec.appendChild(h('p', { class: 'note-line' }, 'Nothing reported yet.'));
+      else sec.appendChild(h('div', { class: 'list' }, items.map(row)));
+      return sec;
+    };
+    root.appendChild(block('Offers reported', 'Self-reported by candidates. The first entry is often a leftover example from the previous season.', D.offers, o => h('article', { class: 'row nostar' },
+      h('div', { class: 'row-main' },
+        h('h4', { class: 'row-title' }, o.institution, A.badge(o.status || 'Reported', o.status && /accept/i.test(o.status) ? 'var(--s3)' : 'var(--axis)')),
+        o.department ? h('p', { class: 'row-sub' }, o.department) : null,
+        h('div', { class: 'chips' }, o.position ? A.chip(o.position) : null, o.location ? A.chip(o.location) : null, o.lastCycle ? A.chip('Previous season') : null),
+        A.notesBlock(o.notes, null, 2)),
+      h('div', { class: 'row-side' }, h('time', null, o.dateMs ? A.fmtDate(o.dateMs) : o.date), o.url ? A.extButton(o.url, 'Source') : (o.source ? h('span', null, o.source) : null)))));
+    root.appendChild(block('Frozen or cancelled searches', null, D.frozen, f => h('article', { class: 'row nostar' },
+      h('div', { class: 'row-main' }, h('h4', { class: 'row-title' }, f.institution), f.department ? h('p', { class: 'row-sub' }, f.department) : null, h('div', { class: 'chips' }, f.status ? A.chip(f.status, 'accent') : null), A.notesBlock(f.notes, null, 2)),
+      h('div', { class: 'row-side' }, h('time', null, f.dateMs ? A.fmtDate(f.dateMs) : f.date)))));
+    root.appendChild(block('Failed searches', null, D.failed, f => h('article', { class: 'row nostar' },
+      h('div', { class: 'row-main' }, h('h4', { class: 'row-title' }, f.institution), f.department ? h('p', { class: 'row-sub' }, f.department) : null,
+        h('div', { class: 'chips' }, f.status ? A.chip(f.status, 'accent') : null, f.confirmed ? A.chip('Confirmed: ' + f.confirmed) : null, f.source ? A.chip('Source: ' + f.source) : null),
+        f.info ? h('div', { class: 'notes' }, h('div', { class: 'note' }, A.rich(f.info))) : null),
+      h('div', { class: 'row-side' }, h('time', null, f.dateMs ? A.fmtDate(f.dateMs) : f.date)))));
+    return root;
+  };
+
+  /* ---------------- Negotiations ---------------- */
+  A.views.negotiations = function (params) {
+    const D = A.db;
+    const root = h('div', null, A.pageHead('Negotiations', 'Salary, startup and teaching terms people were offered and what they finally agreed. The wording is kept as people typed it.'));
+    const line = (label, vals) => {
+      const parts = vals.filter(v => v[1]);
+      if (!parts.length) return null;
+      return h('div', null, h('dt', null, label), h('dd', null, parts.map(([k2, v]) => h('div', null, h('small', null, k2 + ' '), v))));
+    };
+    const single = (label, v) => (v ? h('div', null, h('dt', null, label), h('dd', null, v)) : null);
+    root.appendChild(A.listView({
+      id: 'negotiations', items: D.nego, noun: 'packages', params,
+      placeholder: 'Search type, field, region or comment',
+      filters: [{ key: 'type', label: 'Institution types', values: n => n.type }, { key: 'prior', label: 'Prior roles', values: n => n.prior }],
+      toggles: [{ key: 'notes', label: 'Has comments', test: n => n.notes.length > 0 }],
+      sorts: [{ key: 'new', label: 'Newest first', cmp: newest }, { key: 'old', label: 'Oldest first', cmp: oldest }],
+      csv: { name: 'faculty-negotiations.csv', cols: [['Date', n => n.date], ['Type', n => n.type], ['Field', n => n.field], ['Region', n => n.region], ['Prior position', n => n.prior], ['Salary offered', n => n.salaryOffered], ['Salary asked', n => n.salaryAsked], ['Salary granted', n => n.salaryGranted], ['Startup offered', n => n.startupOffered], ['Startup asked', n => n.startupAsked], ['Startup granted', n => n.startupGranted], ['Salary type', n => n.salaryType], ['Teaching', n => n.teaching], ['Comments', n => n.notes.join(' | ')]] },
+      row: (n, ctx) => h('article', { class: 'row nostar' },
+        h('div', { class: 'row-main' },
+          h('h4', { class: 'row-title' }, A.rich(n.label, ctx.re)),
+          h('div', { class: 'chips' }, n.pubpriv ? A.chip(n.pubpriv) : null, n.region ? A.chip(n.region) : null, n.prior ? A.chip('From: ' + n.prior) : null),
+          h('dl', { class: 'kv' },
+            line('Base salary', [['Offered', n.salaryOffered], ['Asked', n.salaryAsked], ['Granted', n.salaryGranted]]),
+            line('Startup', [['Offered', n.startupOffered], ['Asked', n.startupAsked], ['Granted', n.startupGranted]]),
+            single('Salary support', n.salaryType), single('Appointment', n.appointment), single('Cost of living', n.cost), single('Relocation', n.relocation), single('Teaching load', n.teaching), single('Lab type', n.labType)),
+          A.notesBlock(n.notes, ctx.re, 2)),
+        h('div', { class: 'row-side' }, h('time', null, n.dateMs ? A.fmtDate(n.dateMs) : n.date))),
+    }));
+    return root;
+  };
+
+  /* ---------------- Institutional culture ---------------- */
+  A.views.culture = function (params) {
+    const D = A.db;
+    const root = h('div', null, A.pageHead('Institutional culture', 'Questions about what a department is like to work in, with answers from people who know. Treat single anecdotes with care.'));
+    root.appendChild(A.listView({
+      id: 'culture', items: D.culture, noun: 'questions', params, pageSize: 25,
+      placeholder: 'Search institution, department or comment',
+      toggles: [{ key: 'answered', label: 'Has answers', test: c => c.notes.length > 0 }, { key: 'open', label: 'Still unanswered', test: c => c.notes.length === 0 }],
+      sorts: [{ key: 'new', label: 'Newest first', cmp: (a, b) => b.row - a.row }, { key: 'old', label: 'Oldest first', cmp: (a, b) => a.row - b.row }, { key: 'az', label: 'Institution A to Z', cmp: alpha('institution') }],
+      row: (c, ctx) => A.thread(
+        h('div', { class: 'thread-head' }, h('b', null, A.rich(c.institution || 'Unnamed institution', ctx.re)), c.department && c.department !== 'any' ? h('span', null, A.rich(c.department, ctx.re)) : null, c.dateMs ? h('span', null, A.fmtDate(c.dateMs)) : null),
+        [c.question || '(no question text)'].concat(c.notes), ctx.re, 3),
+    }));
+    return root;
+  };
+
+  /* ---------------- Locations ---------------- */
+  A.views.locations = function (params) {
+    const D = A.db;
+    const root = h('div', null, A.pageHead('Locations', 'What it is like to live in the towns and cities where jobs are advertised: housing, schools, nature, politics and community.'));
+    root.appendChild(A.listView({
+      id: 'locations', items: D.locs, noun: 'places', params, pageSize: 25,
+      placeholder: 'Search a city, a question or a comment',
+      filters: [{ key: 'state', label: 'States', values: l => l.state || '', fmt: stateName }],
+      toggles: [{ key: 'answered', label: 'Has answers', test: l => l.answered }, { key: 'open', label: 'Still unanswered', test: l => !l.answered }],
+      sorts: [{ key: 'az', label: 'Place A to Z', cmp: alpha('city') }, { key: 'new', label: 'Newest first', cmp: (a, b) => b.row - a.row }, { key: 'most', label: 'Most replies', cmp: (a, b) => b.notes.length - a.notes.length }],
+      row: (l, ctx) => {
+        const el = h('article', { class: 'thread' },
+          h('div', { class: 'thread-head' }, h('b', null, A.rich(l.city, ctx.re)), l.state ? A.chip(stateName(l.state), '', () => A.go('locations', { state: l.state })) : null),
+          l.question ? h('div', { class: 'post' }, A.rich(l.question, ctx.re)) : null);
+        if (l.pros || l.cons) el.appendChild(h('div', { class: 'cols2' }, h('div', null, h('h5', null, 'In favour'), h('p', null, A.rich(l.pros || '–', ctx.re))), h('div', null, h('h5', null, 'Against'), h('p', null, A.rich(l.cons || '–', ctx.re)))));
+        if (l.notes.length) el.appendChild(h('div', { class: 'replies' }, l.notes.map(n => h('div', { class: 'reply' }, A.rich(n, ctx.re)))));
+        return el;
+      },
+    }));
+    return root;
+  };
+
+  /* ---------------- Community conversations ---------------- */
+  A.views.community = function (params) {
+    const D = A.db;
+    const tabs = [{ id: 'comments', label: 'Conversations', items: D.comments, ph: 'Search the conversations' }, { id: 'visa', label: 'Visas and immigration', items: D.visa, ph: 'Search visa and immigration threads' }, { id: 'happy', label: 'Happy tab', items: D.happy, ph: 'Search the happy tab' }];
+    const tabState = A.UI.state.communityTab || (A.UI.state.communityTab = { id: 'comments' });
+    if (params.tab) tabState.id = params.tab;
+    const root = h('div', null, A.pageHead('Community conversations', 'The anonymous comment board. Newest threads come first; replies are shown in the order they were posted.'));
+    const body = h('div', null);
+    const seg = h('div', { class: 'seg-tabs', role: 'group', 'aria-label': 'Conversation boards', style: { marginBottom: '14px' } });
+    function show() {
+      A.clear(body);
+      const t = tabs.find(x => x.id === tabState.id) || tabs[0];
+      const today = A.today();
+      body.appendChild(A.listView({
+        id: 'community-' + t.id, items: t.items, noun: 'threads', params: params.tab ? Object.assign({}, params, { tab: undefined }) : params, pageSize: 30,
+        placeholder: t.ph,
+        toggles: [{ key: 'week', label: 'Past 7 days', test: c => c.dateMs !== null && c.dateMs >= today - 7 * A.DAY && c.dateMs <= today + 2 * A.DAY }, { key: 'replies', label: 'Has replies', test: c => c.messages.length > 1 }],
+        sorts: [{ key: 'new', label: 'Newest first', cmp: (a, b) => b.row - a.row }, { key: 'old', label: 'Oldest first', cmp: (a, b) => a.row - b.row }, { key: 'busy', label: 'Most replies', cmp: (a, b) => b.messages.length - a.messages.length || b.row - a.row }],
+        row: (c, ctx) => A.thread(h('div', { class: 'thread-head' }, c.dateMs ? h('span', null, A.fmtDate(c.dateMs)) : (c.date ? h('span', null, c.date) : null)), c.messages, ctx.re, 3),
+      }));
+      [...seg.children].forEach(b => b.setAttribute('aria-pressed', String(b.dataset.id === t.id)));
+    }
+    tabs.forEach(t => {
+      const b = h('button', { type: 'button', 'data-id': t.id, 'aria-pressed': 'false' }, t.label + ' (' + t.items.length + ')');
+      b.addEventListener('click', () => { tabState.id = t.id; show(); });
+      seg.appendChild(b);
+    });
+    root.appendChild(seg); root.appendChild(body);
+    show();
+    return root;
+  };
+
+  /* ---------------- Resources ---------------- */
+  // A resource line is "label: https://..." in one cell. Show the label as the link and the site name beside it.
+  function resItem(it) {
+    const text = it.text || '';
+    const url = it.url || (text.match(/https?:\/\/[^\s)]+/) || [])[0];
+    if (!url) return A.rich(text);
+    const label = text.replace(/https?:\/\/[^\s)]+/g, '').replace(/[\s:\u2013-]+$/, '').replace(/\s{2,}/g, ' ').trim();
+    return h('span', null, A.link(url, label || A.shortUrl(url), 'ext'), ' ', h('small', { style: { color: 'var(--ink3)' } }, A.host(url)));
+  }
+
+  A.views.resources = function () {
+    const D = A.db;
+    const root = h('div', null, A.pageHead('Resources', 'The glossary, reading list and house rules from the spreadsheet, with every link made clickable.'));
+    const g = h('div', { class: 'grid g3' });
+    D.glossary.forEach(col => {
+      g.appendChild(h('section', { class: 'card' },
+        h('header', { class: 'card-head' }, h('h3', null, col.title || 'Links')),
+        h('div', { class: 'notes', style: { marginTop: 0 } }, col.items.map(it => h('div', { class: 'note' }, resItem(it))))));
+    });
+    root.appendChild(g);
+    if (D.welcome.length) {
+      root.appendChild(h('section', { class: 'section' }, h('h2', null, 'House rules from the sheet'),
+        h('div', { class: 'notes' }, D.welcome.slice(0, 14).map(t => h('div', { class: 'note' }, A.rich(t))))));
+    }
+    return root;
+  };
+})();
+
+/* ============================================================
+   App shell: layout, routing, loading, daily refresh, settings.
+   Network use: one request to docs.google.com for the workbook.
+   ============================================================ */
+(function () {
+  const A = (globalThis.A = globalThis.A || {});
+  const h = A.h;
+
+  // The build decides whether a sheet is built in. The hosted (GitHub) build has none: each person connects their own.
+  const CFG = globalThis.ATLAS_CONFIG || {};
+  const DEFAULT_ID = CFG.sheetId || '';
+  const DEFAULT_KEYWORDS = ['microbiolog', 'bacteri', 'pathogen', 'infect', 'host-microbe'];
+  A.status = { source: 'none', at: null, busy: false, error: null, progress: '' };
+  A.db = null;
+  const el = {};
+  // A page opened from disk has the "null" origin, and Google does not allow that origin to read the sheet.
+  const FILE_MODE = location.protocol === 'file:' || location.origin === 'null';
+  A.fileMode = FILE_MODE;
+  // Installing as an app needs a web address (not a file) and the manifest that the hosted build includes.
+  const standalone = () => (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+  const canInstall = () => !FILE_MODE && /^https?:$/.test(location.protocol) && !!document.querySelector('link[rel="manifest"]') && !standalone();
+  A.installPrompt = null;
+  function installField() {
+    if (!canInstall()) return null;
+    const isSafari = /^((?!chrome|chromium|android|edg).)*safari/i.test(navigator.userAgent);
+    let btn = null;
+    if (A.installPrompt) {
+      btn = h('button', { class: 'btn', type: 'button' }, A.icon('download', 15), 'Install on this computer');
+      btn.addEventListener('click', async () => { try { A.installPrompt.prompt(); await A.installPrompt.userChoice; } catch (e) { /* closed */ } A.installPrompt = null; syncInstallBtn(); buildDrawer(); });
+    }
+    const how = A.installPrompt ? 'It opens in its own window with its own icon, and shows your last copy when you are offline.'
+      : isSafari ? 'In Safari on macOS Sonoma or later, choose File, then Add to Dock.'
+      : 'In Chrome or Edge, click the install icon at the right end of the address bar, or open the browser menu and choose Install.';
+    return h('div', { class: 'field' }, h('span', { class: 'lab' }, 'Install as an app'), btn, h('p', { class: 'hint' }, how));
+  }
+  function syncInstallBtn() { if (el.installBtn) el.installBtn.style.display = A.installPrompt && canInstall() ? '' : 'none'; }
+
+  // Read a workbook the person downloaded (File, Download, Microsoft Excel) and keep it for next time.
+  async function loadFile(f) {
+    if (!f) return { ok: false, message: 'No file was chosen.' };
+    try {
+      const wb = await A.parseXlsx(await f.arrayBuffer());
+      const db = A.buildDB(wb);
+      if (!db.postings.length && !db.apps.length) throw new Error('None of the expected tabs were found in that file. Download the sheet as Microsoft Excel (.xlsx) and try again.');
+      A.status.error = null; A.status.dismissed = false;
+      const now = Date.now();
+      A.setData(db, { source: 'file', at: now });
+      A.idb.set(cacheKey(), { savedAt: now, sheets: wb.sheets });
+      return { ok: true };
+    } catch (e) { return { ok: false, message: 'That file could not be read. ' + describe(e) }; }
+  }
+  // The two steps that update the data when live reading is not possible.
+  function updateSteps(onDone) {
+    const input = h('input', { type: 'file', accept: '.xlsx', class: 'sr', id: 'filePick' });
+    const msg = h('p', { class: 'hint', role: 'status' });
+    input.addEventListener('change', async () => { const r = await loadFile(input.files[0]); if (r.ok) { if (onDone) onDone(); } else msg.textContent = r.message; input.value = ''; });
+    return h('div', { class: 'steps' },
+      sheetId() ? h('div', null, h('a', { class: 'btn', href: 'https://docs.google.com/spreadsheets/d/' + sheetId() + '/export?format=xlsx', target: '_blank', rel: 'noopener noreferrer' }, A.icon('download', 15), '1. Download the sheet as Excel')) : null,
+      h('div', null, h('label', { class: 'btn', for: 'filePick', tabindex: '0' }, A.icon('file', 15), sheetId() ? '2. Choose the downloaded file' : 'Choose a downloaded Excel file'), input),
+      h('p', { class: 'hint' }, 'You can also drag the downloaded file onto this page. The app keeps it for next time.'), msg);
+  }
+
+  function sheetId() { return A.store.get('sheetId', DEFAULT_ID) || ''; }
+  function cacheKey() { return 'wb:' + (sheetId() || 'file'); }
+  function parseSheetId(str) {
+    str = String(str || '').trim();
+    const m = str.match(/\/d\/([A-Za-z0-9_-]{20,})/);
+    if (m) return m[1];
+    return /^[A-Za-z0-9_-]{25,}$/.test(str) ? str : '';
+  }
+  function sheetLabel() { return !sheetId() ? 'No sheet connected' : (sheetId() === DEFAULT_ID && CFG.label ? CFG.label : 'Your spreadsheet'); }
+
+  /* ---------------- Theme ---------------- */
+  function applyTheme() {
+    const t = A.store.get('theme', 'auto');
+    if (t === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t);
+    if (el.themeBtn) { A.clear(el.themeBtn); el.themeBtn.appendChild(A.icon(isDark() ? 'sun' : 'moon', 17)); }
+  }
+  function isDark() {
+    const t = A.store.get('theme', 'auto');
+    return t === 'dark' || (t === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+  }
+
+  /* ---------------- Navigation ---------------- */
+  const NAV = [
+    { group: '', items: [['overview', 'Overview'], ['statistics', 'Statistics']] },
+    { group: 'Browse', items: [['postings', 'Job postings', d => d.postings.length], ['applications', 'Applications', d => d.apps.length], ['noresponse', 'No response', d => d.noresp.length], ['offers', 'Offers and changes', d => d.offers.length + d.frozen.length + d.failed.length], ['negotiations', 'Negotiations', d => d.nego.length]] },
+    { group: 'Community', items: [['community', 'Conversations', d => d.comments.length + d.visa.length + d.happy.length], ['culture', 'Institutional culture', d => d.culture.length], ['locations', 'Locations', d => d.locs.length]] },
+    { group: '', items: [['resources', 'Resources']] },
+  ];
+  const TITLES = { overview: 'Overview', statistics: 'Statistics', postings: 'Job postings', applications: 'Applications', noresponse: 'No response', offers: 'Offers and changes', negotiations: 'Negotiations', community: 'Conversations', culture: 'Institutional culture', locations: 'Locations', resources: 'Resources', search: 'Search' };
+
+  function buildRail() {
+    const rail = h('aside', { class: 'rail', id: 'rail', 'aria-label': 'Sections' });
+    rail.appendChild(h('div', { class: 'brand' }, A.brandMark(), h('div', null, h('b', null, 'Faculty Market Atlas'), h('small', { id: 'sheetLabel' }, sheetLabel()))));
+    el.navLinks = {};
+    NAV.forEach(g => {
+      const grp = h('nav', { class: 'navgroup', 'aria-label': g.group || 'Main' }, g.group ? h('h6', null, g.group) : null);
+      g.items.forEach(([id, label, count]) => {
+        const ct = h('span', { class: 'ct' }, '');
+        const a = h('a', { class: 'nav', href: '#/' + id }, label, ct);
+        el.navLinks[id] = { a, ct, count };
+        grp.appendChild(a);
+      });
+      rail.appendChild(grp);
+    });
+    el.status = h('div', { class: 'row' }); el.statusSub = h('div', { style: { color: 'var(--ink3)' } });
+    el.openSheet = h('a', { href: '#', target: '_blank', rel: 'noopener noreferrer' }, 'Open the original sheet');
+    rail.appendChild(h('div', { class: 'railfoot' }, el.status, el.statusSub, el.openSheet));
+    return rail;
+  }
+  function updateCounts() {
+    if (!A.db) return;
+    Object.values(el.navLinks).forEach(n => { n.ct.textContent = n.count ? A.n(n.count(A.db)) : ''; });
+  }
+  function updateStatus() {
+    A.clear(el.status);
+    const st = A.status;
+    const dot = h('span', { class: 'dot-live' + (st.busy ? ' busy' : (st.error || !sheetId() && !st.at ? ' off' : '')) });
+    let text;
+    if (st.busy) text = st.progress || 'Refreshing from Google Sheets';
+    else if (st.at) text = 'Updated ' + A.stamp(st.at);
+    else text = sheetId() ? 'No data loaded' : 'Not connected yet';
+    el.status.appendChild(dot); el.status.appendChild(h('span', null, text));
+    const src = FILE_MODE && st.source !== 'file' ? 'Opened from a file, so it cannot read the sheet directly.' : { live: 'Read live from the sheet.', cache: 'Saved copy from your last refresh.', builtin: 'Built-in copy. A fresh one is fetched when online.', file: 'Loaded from a file you chose.', none: '' }[st.source] || '';
+    const hrs = A.store.get('refreshHours', 24);
+    el.statusSub.textContent = !sheetId() && !st.at ? '' : FILE_MODE ? (src ? src + ' ' : '') + 'Update it by loading a downloaded workbook.' : (src ? src + ' ' : '') + 'Checks again every ' + (hrs === 24 ? 'day' : hrs + ' hours') + '.';
+    el.openSheet.href = 'https://docs.google.com/spreadsheets/d/' + sheetId() + '/edit';
+    el.openSheet.style.display = sheetId() ? '' : 'none';
+    document.getElementById('sheetLabel').textContent = sheetLabel();
+  }
+
+  /* ---------------- Routing ---------------- */
+  function parseRoute() {
+    const raw = (location.hash || '').replace(/^#\/?/, '');
+    const [path, qs] = raw.split('?');
+    const params = {};
+    if (qs) qs.split('&').forEach(p => { const [k, v] = p.split('='); if (k) params[decodeURIComponent(k)] = decodeURIComponent((v || '').replace(/\+/g, ' ')); });
+    return { name: path || 'overview', params };
+  }
+  function render() {
+    const { name, params } = parseRoute();
+    const view = A.views[name] ? name : 'overview';
+    Object.keys(el.navLinks).forEach(id => { if (id === view) el.navLinks[id].a.setAttribute('aria-current', 'page'); else el.navLinks[id].a.removeAttribute('aria-current'); });
+    document.title = (TITLES[view] || 'Atlas') + ' | Faculty Market Atlas';
+    if (view === 'search') el.search.value = params.q || ''; else if (document.activeElement !== el.search) el.search.value = '';
+    A.clear(el.page);
+    if (!A.db) { el.page.appendChild(sheetId() ? loadingView() : setupView()); return; }
+    if (A.status.error) el.page.appendChild(errorBanner());
+    else if (staleBanner()) el.page.appendChild(staleBanner());
+    try { el.page.appendChild(A.views[view](params)); }
+    catch (e) { console.error(e); el.page.appendChild(A.emptyState('This screen could not be drawn', 'Something in the sheet did not look as expected. ' + (e && e.message ? e.message : ''))); }
+    if (A.db.warnings.length) el.page.appendChild(h('p', { class: 'note-line', style: { marginTop: '28px' } }, 'Reading notes: ' + A.db.warnings.join(' ')));
+    closeRail();
+    window.scrollTo(0, 0);
+  }
+  function staleBanner() {
+    if (!FILE_MODE || !A.status.at || A.status.dismissed) return null;
+    const hrs = A.store.get('refreshHours', 24);
+    if (Date.now() - A.status.at < hrs * 3600e3) return null;
+    const x = h('button', { class: 'btn quiet icon', type: 'button', 'aria-label': 'Dismiss', onClick: () => { A.status.dismissed = true; render(); } }, A.icon('x', 16));
+    return h('div', { class: 'banner info' }, h('div', { style: { flex: '1' } },
+      h('b', null, 'This copy is from ' + A.stamp(A.status.at) + '. '),
+      'A page opened from your computer is not allowed to read Google Sheets directly, so it updates when you load a fresh workbook. ',
+      h('div', { class: 'acts' }, updateSteps())), x);
+  }
+  // First run of the hosted build: no sheet is built in, so ask for the link. It is kept in this browser only.
+  function connect(raw, msg) {
+    const id = parseSheetId(raw);
+    if (!id) { msg.textContent = 'That does not look like a Google Sheets link. Open the sheet, then copy the whole address from the address bar.'; return; }
+    A.store.set('sheetId', id); A.status.error = null; updateStatus(); render(); loadInitial();
+  }
+  function setupView() {
+    const input = h('input', { class: 'input', type: 'text', placeholder: 'https://docs.google.com/spreadsheets/d/…', spellcheck: 'false', 'aria-label': 'Link to your Google Sheet', style: { flex: '1 1 320px' } });
+    const msg = h('p', { class: 'hint', role: 'status' }, 'The sheet must be shared as “Anyone with the link can view”.');
+    const go = h('button', { class: 'btn primary', type: 'button' }, 'Connect');
+    go.addEventListener('click', () => connect(input.value, msg));
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') connect(input.value, msg); });
+    return h('div', { class: 'setup' },
+      A.pageHead('Connect your spreadsheet', 'Paste the link to your Google Sheet (the Future PI Slack job-market layout). This browser reads it directly from Google. The link and the data stay on this computer.'),
+      h('section', { class: 'card', style: { maxWidth: '720px' } },
+        h('div', { class: 'toolbar', style: { marginBottom: '6px' } }, input, go), msg),
+      h('p', { class: 'note-line', style: { marginTop: '22px' } }, 'No link, or no internet? Open a downloaded Excel copy of the sheet instead.'),
+      h('div', { style: { marginTop: '10px' } }, updateSteps()));
+  }
+  function loadingView() {
+    return h('div', null, A.pageHead('Opening the market', A.status.busy ? (A.status.progress || 'Fetching the spreadsheet.') : 'Preparing your data.'),
+      A.status.error ? errorBanner(true) : h('p', { class: 'note-line' }, 'This takes a few seconds the first time. Later visits open instantly from a saved copy.'));
+  }
+  function errorBanner(noCopy) {
+    const isFile = /^That file/.test(A.status.error || '');
+    const acts = h('div', { class: 'acts' },
+      isFile ? null : h('button', { class: 'btn sm', type: 'button', onClick: () => A.refresh({ manual: true }) }, 'Try again'),
+      h('button', { class: 'btn sm', type: 'button', onClick: () => openDrawer() }, isFile ? 'Choose another file' : 'Open settings or load a file'));
+    return h('div', { class: 'banner' }, h('div', null,
+      isFile ? null : h('b', null, 'Could not refresh the data. '), A.status.error,
+      noCopy || !A.status.at ? '' : ' Showing the copy saved ' + A.stamp(A.status.at) + '.', acts));
+  }
+  function openRail() { el.rail.classList.add('open'); el.scrim.classList.add('on'); }
+  function closeRail() { el.rail.classList.remove('open'); if (!el.drawer.classList.contains('open')) el.scrim.classList.remove('on'); }
+
+  /* ---------------- Data ---------------- */
+  A.setData = function (db, meta) {
+    A.db = db;
+    Object.assign(A.status, meta);
+    updateCounts(); updateStatus();
+    const y = window.scrollY;
+    render();
+    if (meta.keepScroll) window.scrollTo(0, y);
+  };
+  function describe(e) {
+    const m = String(e && e.message || e);
+    if (e instanceof TypeError || /failed to fetch|networkerror|load failed/i.test(m)) return 'Google Sheets could not be reached. Check your connection, or whether your network blocks docs.google.com.';
+    return m;
+  }
+  A.refresh = async function (opts) {
+    opts = opts || {};
+    if (A.status.busy) return;
+    if (FILE_MODE) { if (opts.manual) openDrawer(); return; }
+    const id = sheetId();
+    if (!id) { if (opts.manual) openDrawer(); return; }
+    A.status.busy = true; A.status.progress = 'Fetching the spreadsheet'; updateStatus();
+    if (opts.manual && A.db) el.main.classList.add('busy');
+    try {
+      const res = await fetch('https://docs.google.com/spreadsheets/d/' + id + '/export?format=xlsx', { cache: 'no-store' });
+      if (!res.ok) throw new Error('Google Sheets answered with status ' + res.status + (res.status === 404 || res.status === 403 ? '. The sheet may no longer be shared with anyone who has the link.' : '.'));
+      if (/text\/html/i.test(res.headers.get('content-type') || '')) throw new Error('Google returned a web page instead of the workbook. The sheet may require signing in.');
+      const buf = await res.arrayBuffer();
+      A.status.progress = 'Reading the workbook'; updateStatus();
+      const wb = await A.parseXlsx(buf, (d, t) => { A.status.progress = 'Reading tab ' + d + ' of ' + t; updateStatus(); });
+      const db = A.buildDB(wb);
+      if (!db.postings.length && !db.apps.length) throw new Error('The workbook opened, but none of the expected tabs were found.');
+      A.status.error = null; A.status.busy = false;
+      A.setData(db, { source: 'live', at: Date.now(), keepScroll: true });
+      A.idb.set(cacheKey(), { savedAt: Date.now(), sheets: wb.sheets });
+    } catch (e) {
+      console.warn('Refresh failed:', e);
+      A.status.error = describe(e);
+      if (A.db) { A.status.busy = false; render(); }
+    } finally {
+      A.status.busy = false; el.main.classList.remove('busy'); updateStatus();
+      if (!A.db) render();
+    }
+  };
+  function due() {
+    if (FILE_MODE || !sheetId()) return false;
+    if (A.status.source === 'builtin') return true; // the embedded copy is only a starting point
+    const hrs = A.store.get('refreshHours', 24);
+    return !A.status.at || (Date.now() - A.status.at) > hrs * 3600e3 - 60e3;
+  }
+
+  /* ---------------- Settings drawer ---------------- */
+  function openDrawer() { buildDrawer(); el.drawer.classList.add('open'); el.scrim.classList.add('on'); }
+  function closeDrawer() { el.drawer.classList.remove('open'); if (!el.rail.classList.contains('open')) el.scrim.classList.remove('on'); }
+  function buildDrawer() {
+    A.clear(el.drawer);
+    const idInput = h('input', { class: 'input', type: 'text', value: sheetId() ? 'https://docs.google.com/spreadsheets/d/' + sheetId() + '/edit' : '', placeholder: 'Paste the link of your Google Sheet', spellcheck: 'false', 'aria-label': 'Spreadsheet link' });
+    const idMsg = h('p', { class: 'hint', role: 'status' }, 'The sheet must be shared so anyone with the link can view it.');
+    const kwInput = h('textarea', { class: 'input', rows: '3', spellcheck: 'false', 'aria-label': 'Keywords' }, A.UI.keywords.join(', '));
+    const hoursSel = h('select', { class: 'input', 'aria-label': 'Refresh interval' }, [[6, 'Every 6 hours'], [12, 'Every 12 hours'], [24, 'Once a day'], [48, 'Every 2 days']].map(([v, l]) => h('option', { value: String(v) }, l)));
+    hoursSel.value = String(A.store.get('refreshHours', 24));
+    const theme = A.store.get('theme', 'auto');
+    const themeBtns = h('div', { class: 'seg-tabs', role: 'group', 'aria-label': 'Theme' }, [['auto', 'Match system'], ['light', 'Light'], ['dark', 'Dark']].map(([v, l]) => {
+      const b = h('button', { type: 'button', 'aria-pressed': String(theme === v) }, l);
+      b.addEventListener('click', () => { A.store.set('theme', v); applyTheme(); [...themeBtns.children].forEach(x => x.setAttribute('aria-pressed', String(x === b))); render(); });
+      return b;
+    }));
+    const save = h('button', { class: 'btn primary', type: 'button' }, 'Save settings');
+    save.addEventListener('click', () => {
+      const raw = idInput.value.trim();
+      const id = raw ? parseSheetId(raw) : sheetId();
+      if (raw && !id) { idMsg.textContent = 'That does not look like a Google Sheets link. Paste the full address from your browser.'; idInput.focus(); return; }
+      const changed = id !== sheetId();
+      if (id && id === DEFAULT_ID) A.store.del('sheetId'); else if (id) A.store.set('sheetId', id);
+      A.UI.keywords = kwInput.value.split(/[,\n]/).map(x => x.trim()).filter(Boolean);
+      A.store.set('keywords', A.UI.keywords);
+      A.store.set('refreshHours', +hoursSel.value);
+      closeDrawer();
+      if (changed) { A.status.at = null; A.db = null; A.status.source = 'none'; loadInitial(); } else { updateStatus(); render(); }
+    });
+    const clear = h('button', { class: 'btn', type: 'button' }, 'Clear saved data');
+    clear.addEventListener('click', async () => {
+      await A.idb.del(cacheKey());
+      ['saved', 'lastVisit', 'keywords', 'sheetId', 'refreshHours', 'theme'].forEach(k => A.store.del(k));
+      location.reload();
+    });
+    el.drawer.appendChild(h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } }, h('h2', null, 'Settings'), h('button', { class: 'btn quiet icon', type: 'button', 'aria-label': 'Close settings', onClick: closeDrawer }, A.icon('x', 18))));
+    el.drawer.appendChild(h('div', { class: 'field' }, h('label', null, 'Spreadsheet'), idInput, idMsg, h('p', { class: 'hint' }, 'Next season, paste the new sheet’s link here and the app will follow it.')));
+    el.drawer.appendChild(h('div', { class: 'field' }, h('label', null, 'Refresh'), hoursSel, h('p', { class: 'hint' }, 'The app checks while it is open and again whenever you come back to the tab. The Refresh button always fetches right away.')));
+    el.drawer.appendChild(h('div', { class: 'field' }, h('label', null, 'My keywords'), kwInput, h('p', { class: 'hint' }, 'Separate with commas. Postings whose text contains any of these get a highlight and appear under the keyword filter. Parts of words work: “microbiolog” finds microbiology and microbiologist.')));
+    el.drawer.appendChild(h('div', { class: 'field' }, h('span', { class: 'lab' }, 'Appearance'), themeBtns));
+    const inst = installField(); if (inst) el.drawer.appendChild(inst);
+    el.drawer.appendChild(h('div', { class: 'field' }, h('span', { class: 'lab' }, FILE_MODE ? 'Update the data' : 'Or load a downloaded workbook'), updateSteps(closeDrawer)));
+    el.drawer.appendChild(h('div', { class: 'field', style: { display: 'flex', gap: '8px', flexDirection: 'row', marginTop: '26px' } }, save, clear));
+    el.drawer.appendChild(h('p', { class: 'hint', style: { marginTop: '26px' } }, 'Privacy: this page talks only to docs.google.com, to read the sheet. Saved postings, keywords and the cached workbook stay in this browser.'));
+  }
+
+  /* ---------------- Boot ---------------- */
+  async function loadInitial() {
+    const id = sheetId();
+    const cached = await A.idb.get(cacheKey());
+    if (cached && cached.sheets) {
+      try { A.setData(A.buildDB(cached), { source: 'cache', at: cached.savedAt }); } catch (e) { console.warn('Cached copy unreadable', e); }
+    }
+    if (!A.db && id && id === DEFAULT_ID) {
+      const node = document.getElementById('snapshot');
+      const b64 = node ? node.textContent.trim() : '';
+      if (b64 && b64.length > 100) {
+        try { const snap = await A.unpackSnapshot(b64); A.setData(A.buildDB(snap), { source: 'builtin', at: snap.savedAt }); } catch (e) { console.warn('Built-in copy unreadable', e); }
+      }
+    }
+    if (!A.db) render();
+    if (due()) A.refresh({ manual: false });
+  }
+
+  A.boot = function () {
+    A.UI.keywords = A.store.get('keywords', DEFAULT_KEYWORDS);
+    A.UI.saved = new Set(A.store.get('saved', []));
+    A.UI.prevVisit = A.store.get('lastVisit', null);
+    const root = document.getElementById('app');
+    el.rail = buildRail();
+    el.scrim = h('div', { class: 'scrim', onClick: () => { closeRail(); closeDrawer(); } });
+    el.drawer = h('aside', { class: 'drawer', 'aria-label': 'Settings' });
+    el.search = h('input', { class: 'input', type: 'text', placeholder: 'Search all tabs  ( / )', 'aria-label': 'Search all tabs', autocomplete: 'off', spellcheck: 'false' });
+    const searchBox = h('div', { class: 'search' }, A.icon('search', 16), el.search);
+    el.refreshBtn = h('button', { class: 'btn', type: 'button', title: 'Fetch the latest data from the sheet now' }, A.icon('refresh', 15), 'Refresh');
+    el.themeBtn = h('button', { class: 'btn quiet icon', type: 'button', 'aria-label': 'Switch between light and dark', title: 'Switch between light and dark' });
+    const gear = h('button', { class: 'btn quiet icon', type: 'button', 'aria-label': 'Settings', title: 'Settings' }, A.icon('sliders', 17));
+    el.installBtn = h('button', { class: 'btn hide-sm', type: 'button', style: { display: 'none' }, title: 'Install this as an app on your computer' }, A.icon('download', 15), 'Install app');
+    const menu = h('button', { class: 'btn quiet icon menu-btn', type: 'button', 'aria-label': 'Open the menu' }, A.icon('menu', 19));
+    el.page = h('main', { class: 'page', id: 'page', tabindex: '-1' });
+    el.main = h('div', { class: 'main' }, h('header', { class: 'topbar' }, menu, searchBox, h('span', { class: 'spacer' }), el.installBtn, el.refreshBtn, el.themeBtn, gear), el.page);
+    root.appendChild(h('div', { class: 'app' }, el.rail, el.main));
+    root.appendChild(el.scrim); root.appendChild(el.drawer);
+
+    applyTheme();
+    menu.addEventListener('click', openRail);
+    gear.addEventListener('click', openDrawer);
+    document.addEventListener('fma:settings', openDrawer);
+    el.refreshBtn.addEventListener('click', () => A.refresh({ manual: true }));
+    el.installBtn.addEventListener('click', async () => { if (!A.installPrompt) return; try { A.installPrompt.prompt(); await A.installPrompt.userChoice; } catch (e) { /* closed */ } A.installPrompt = null; syncInstallBtn(); });
+    window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); A.installPrompt = e; syncInstallBtn(); });
+    window.addEventListener('appinstalled', () => { A.installPrompt = null; syncInstallBtn(); });
+    el.themeBtn.addEventListener('click', () => { A.store.set('theme', isDark() ? 'light' : 'dark'); applyTheme(); render(); });
+    el.search.addEventListener('input', A.debounce(() => { const q = el.search.value.trim(); if (q) A.go('search', { q }); else if (parseRoute().name === 'search') A.go('overview'); }, 260));
+    el.search.addEventListener('keydown', e => { if (e.key === 'Escape') { el.search.value = ''; el.search.blur(); } });
+    document.addEventListener('keydown', e => {
+      if (e.key === '/' && !/input|textarea|select/i.test((document.activeElement || {}).tagName || '')) { e.preventDefault(); el.search.focus(); el.search.select(); }
+      if (e.key === 'Escape') { closeDrawer(); closeRail(); }
+    });
+    window.addEventListener('hashchange', render);
+    window.addEventListener('dragover', e => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) e.preventDefault(); });
+    window.addEventListener('drop', async e => {
+      const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (!f) return;
+      e.preventDefault();
+      const r = await loadFile(f);
+      if (!r.ok) { A.status.error = r.message; render(); }
+    });
+    if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (A.store.get('theme', 'auto') === 'auto') { applyTheme(); render(); } });
+
+    // remember when you were last here, for "new since your last visit"
+    const stamp = () => A.store.set('lastVisit', Date.now());
+    window.addEventListener('pagehide', stamp);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') stamp(); else if (due() && !A.status.busy) A.refresh({ manual: false }); });
+    setInterval(() => { if (document.visibilityState === 'visible' && due() && !A.status.busy) A.refresh({ manual: false }); }, 10 * 60e3);
+
+    updateStatus();
+    loadInitial();
+  };
+})();
+
+A.boot();
+if("serviceWorker"in navigator&&/^https?:$/.test(location.protocol)){addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}
+</script>
+</body>
+</html>
