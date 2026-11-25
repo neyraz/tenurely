@@ -63,6 +63,30 @@ Open your `github.io` address in the browser you prefer.
 
 If the installed app asks for the sheet link again, paste it again. Nothing is lost.
 
+## Part 4: Daily use
+
+The app opens on **Today**, which lists only what changed in the sheet since you last left: new replies at places you applied, new postings that match your keywords, upcoming deadlines, new replies from others, and new or busy conversation threads. When you have read it, click **Mark everything as seen**. On the installed app in Chrome or Edge, the icon shows a number when something new concerns you.
+
+**Track your applications.** On **Job postings**, press **Track** on a posting you applied to. Enter the date, the deadline and, if you like, a private note. Use **Add one that is not on the sheet** on **My applications** for jobs that are not listed. My applications then shows:
+- every reply others reported from the same institution (interviews, rejections, letter requests, searches frozen), marked when the department matches yours;
+- how long replies usually take in that field, and whether your wait is longer than most;
+- with last season's sheet added (below), when the same place first replied a year ago.
+
+**Institution pages.** Click any institution name to see everything about it in one place: postings, replies and their dates, no-response reports, culture questions, notes about the city, and mentions on the comment board. Different spellings ("UCSF", "University of California, San Francisco") are matched.
+
+**Last season's sheet.** In **Settings**, under *Last season's sheet*, click the 2025–26 button (taken from the sheet's Resources tab), then **Save settings**. It is read once and refreshed weekly.
+
+**Keywords.** In **Settings**, you can make several named groups, one per line, for example:
+
+```
+Microbiology: microbiolog, bacteri, pathogen
+Cell wall: peptidoglycan, cell envelope
+```
+
+Words under *Words to exclude* (for example `chemistry`) stop a posting from counting as a match.
+
+**Back up.** Your applications and notes are stored in this browser only. In **Settings**, use **Download a backup** now and then, and **Restore from a backup** on another computer or browser. **Clear saved data** asks for a second click, because it deletes your applications too.
+
 ## How the daily update works
 
 - When you open the app, or come back to it after a break, it checks how old your copy is. If it is older than a day, it reads the sheet again.
@@ -75,10 +99,10 @@ If the installed app asks for the sheet link again, paste it again. Nothing is l
 If you get a newer version of this package:
 
 1. Unzip it.
-2. On GitHub, open your repository, then the `docs` folder. Click **Add file**, then **Upload files**, and drop in the new files from the new `docs` folder. Do the same for `src` if it changed.
-3. Click **Commit changes**. After a minute, close and reopen the app.
+2. On GitHub, open your repository. Click **Add file**, then **Upload files**, and drag in the `docs` and `src` folders and `build.py` from the new package. GitHub replaces files with the same name and adds new ones.
+3. Click **Commit changes**. After a minute or two, close the app completely and open it again. If it still shows the old version, reload once more.
 
-Your sheet link and saved copy stay in your browser and are not affected.
+Your sheet link, applications, notes and saved copy stay in your browser and are not affected.
 
 ## If something goes wrong
 

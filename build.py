@@ -15,8 +15,8 @@ import argparse, base64, gzip, hashlib, json, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent
 SRC = ROOT / 'src' if (ROOT / 'src').exists() else ROOT
-ORDER = ['01-util.js', '02-xlsx.js', '03-data.js', '04-charts.js', '05-stats.js', '06-ui.js',
-         '07-views-a.js', '07-views-b.js', '08-app.js']
+ORDER = ['01-util.js', '02-xlsx.js', '03-data.js', '04-charts.js', '05-stats.js', '06-ui.js', '06b-mine.js',
+         '07-views-a.js', '07-views-b.js', '07-views-c.js', '08-app.js']
 
 ICON = ("<link rel=\"icon\" href=\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E"
         "%3Crect width='32' height='32' rx='7' fill='%230f4a96'/%3E%3Crect x='6' y='6' width='8' height='8' rx='2' fill='%23cce3fd'/%3E"

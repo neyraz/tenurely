@@ -83,12 +83,12 @@
 
   /* ---------------- Navigation ---------------- */
   const NAV = [
-    { group: '', items: [['overview', 'Overview'], ['statistics', 'Statistics']] },
+    { group: '', items: [['today', 'Today', d => A.todayCounts(d).total || ''], ['mine', 'My applications', () => A.mine.tracked().length || ''], ['overview', 'Overview'], ['statistics', 'Statistics']] },
     { group: 'Browse', items: [['postings', 'Job postings', d => d.postings.length], ['applications', 'Applications', d => d.apps.length], ['noresponse', 'No response', d => d.noresp.length], ['offers', 'Offers and changes', d => d.offers.length + d.frozen.length + d.failed.length], ['negotiations', 'Negotiations', d => d.nego.length]] },
     { group: 'Community', items: [['community', 'Conversations', d => d.comments.length + d.visa.length + d.happy.length], ['culture', 'Institutional culture', d => d.culture.length], ['locations', 'Locations', d => d.locs.length]] },
     { group: '', items: [['resources', 'Resources']] },
   ];
-  const TITLES = { overview: 'Overview', statistics: 'Statistics', postings: 'Job postings', applications: 'Applications', noresponse: 'No response', offers: 'Offers and changes', negotiations: 'Negotiations', community: 'Conversations', culture: 'Institutional culture', locations: 'Locations', resources: 'Resources', search: 'Search' };
+  const TITLES = { today: 'Today', mine: 'My applications', institution: 'Institution', overview: 'Overview', statistics: 'Statistics', postings: 'Job postings', applications: 'Applications', noresponse: 'No response', offers: 'Offers and changes', negotiations: 'Negotiations', community: 'Conversations', culture: 'Institutional culture', locations: 'Locations', resources: 'Resources', search: 'Search' };
 
   function buildRail() {
     const rail = h('aside', { class: 'rail', id: 'rail', 'aria-label': 'Sections' });
@@ -111,8 +111,11 @@
   }
   function updateCounts() {
     if (!A.db) return;
-    Object.values(el.navLinks).forEach(n => { n.ct.textContent = n.count ? A.n(n.count(A.db)) : ''; });
+    Object.values(el.navLinks).forEach(n => { const v = n.count ? n.count(A.db) : ''; n.ct.textContent = v === '' ? '' : A.n(v); });
+    el.navLinks.today.ct.classList.toggle('hot', !!el.navLinks.today.ct.textContent);
+    A.updateBadge(A.todayCounts(A.db).badge);
   }
+  A.refreshCounts = updateCounts;
   function updateStatus() {
     A.clear(el.status);
     const st = A.status;
@@ -136,11 +139,11 @@
     const [path, qs] = raw.split('?');
     const params = {};
     if (qs) qs.split('&').forEach(p => { const [k, v] = p.split('='); if (k) params[decodeURIComponent(k)] = decodeURIComponent((v || '').replace(/\+/g, ' ')); });
-    return { name: path || 'overview', params };
+    return { name: path || 'today', params };
   }
   function render() {
     const { name, params } = parseRoute();
-    const view = A.views[name] ? name : 'overview';
+    const view = A.views[name] ? name : 'today';
     Object.keys(el.navLinks).forEach(id => { if (id === view) el.navLinks[id].a.setAttribute('aria-current', 'page'); else el.navLinks[id].a.removeAttribute('aria-current'); });
     document.title = (TITLES[view] || 'Atlas') + ' | Faculty Market Atlas';
     if (view === 'search') el.search.value = params.q || ''; else if (document.activeElement !== el.search) el.search.value = '';
@@ -154,6 +157,8 @@
     closeRail();
     window.scrollTo(0, 0);
   }
+  // Redraw the current screen in place (after saving an application, loading last season, and so on).
+  A.rerender = function (keepScroll) { const y = window.scrollY; render(); if (keepScroll) window.scrollTo(0, y); };
   function staleBanner() {
     if (!FILE_MODE || !A.status.at || A.status.dismissed) return null;
     const hrs = A.store.get('refreshHours', 24);
@@ -202,6 +207,7 @@
   /* ---------------- Data ---------------- */
   A.setData = function (db, meta) {
     A.db = db;
+    A.seen.init(cacheKey());
     Object.assign(A.status, meta);
     updateCounts(); updateStatus();
     const y = window.scrollY;
@@ -249,6 +255,58 @@
     return !A.status.at || (Date.now() - A.status.at) > hrs * 3600e3 - 60e3;
   }
 
+  /* ---------------- Last season's sheet (optional) ----------------
+     Used only for comparisons: when replies came a year ago, at the same places. It changes little,
+     so it is fetched again at most once a week. */
+  A.prev = null;
+  A.prevInfo = { at: null, error: null, busy: false };
+  const prevId = () => A.store.get('prevSheetId', '') || '';
+  async function loadPrev(force) {
+    const pid = prevId();
+    if (!pid) { A.prev = null; A.prevInfo = { at: null, error: null, busy: false }; return; }
+    const key = 'wb:prev:' + pid;
+    const cached = await A.idb.get(key);
+    if (cached && cached.sheets) { try { A.prev = A.buildDB(cached); A.prevInfo.at = cached.savedAt; } catch (e) { console.warn('Saved copy of last season unreadable', e); } }
+    const stale = !cached || Date.now() - cached.savedAt > 7 * 864e5;
+    if (pid !== 'file' && !FILE_MODE && (stale || force)) {
+      A.prevInfo.busy = true;
+      try {
+        const res = await fetch('https://docs.google.com/spreadsheets/d/' + pid + '/export?format=xlsx', { cache: 'no-store' });
+        if (!res.ok) throw new Error('Google Sheets answered with status ' + res.status + '. Check that the link is shared with anyone who has it.');
+        if (/text\/html/i.test(res.headers.get('content-type') || '')) throw new Error('Google returned a web page instead of the workbook.');
+        const wb = await A.parseXlsx(await res.arrayBuffer());
+        const db = A.buildDB(wb);
+        if (!db.apps.length) throw new Error('That sheet has no replies in an Application info tab.');
+        A.prev = db; A.prevInfo.at = Date.now(); A.prevInfo.error = null;
+        A.idb.set(key, { savedAt: A.prevInfo.at, sheets: wb.sheets });
+      } catch (e) { A.prevInfo.error = describe(e); }
+      A.prevInfo.busy = false;
+    }
+    if (A.db && ['mine', 'institution'].includes(parseRoute().name) && !document.querySelector('.editor')) A.rerender(true);
+  }
+  async function loadPrevFile(f, msg) {
+    try {
+      const wb = await A.parseXlsx(await f.arrayBuffer());
+      const db = A.buildDB(wb);
+      if (!db.apps.length) throw new Error('That file has no replies in an Application info tab.');
+      A.store.set('prevSheetId', 'file');
+      A.prev = db; A.prevInfo = { at: Date.now(), error: null, busy: false };
+      await A.idb.set('wb:prev:file', { savedAt: A.prevInfo.at, sheets: wb.sheets });
+      msg.textContent = 'Loaded: ' + A.n(db.apps.length) + ' replies from last season.';
+    } catch (e) { msg.textContent = 'That file could not be read. ' + describe(e); }
+  }
+  // Earlier seasons' sheets listed on the Resources tab of the current sheet.
+  function prevSuggestions() {
+    const out = [];
+    ((A.db && A.db.glossary) || []).forEach(col => col.items.forEach(it => {
+      const url = it.url || ((it.text || '').match(/https?:\/\/\S+/) || [])[0];
+      const m = (it.text || '').match(/future pi slack[^\n]*?(20\d\d)\s*[-\u2013]\s*(20\d\d)/i);
+      const id = url ? parseSheetId(url) : '';
+      if (m && id && id !== sheetId() && !out.some(x => x.id === id)) out.push({ id, label: m[1] + '\u2013' + m[2].slice(2), y: +m[2] });
+    }));
+    return out.sort((a, b) => b.y - a.y).slice(0, 3);
+  }
+
   /* ---------------- Settings drawer ---------------- */
   function openDrawer() { buildDrawer(); el.drawer.classList.add('open'); el.scrim.classList.add('on'); }
   function closeDrawer() { el.drawer.classList.remove('open'); if (!el.rail.classList.contains('open')) el.scrim.classList.remove('on'); }
@@ -256,7 +314,26 @@
     A.clear(el.drawer);
     const idInput = h('input', { class: 'input', type: 'text', value: sheetId() ? 'https://docs.google.com/spreadsheets/d/' + sheetId() + '/edit' : '', placeholder: 'Paste the link of your Google Sheet', spellcheck: 'false', 'aria-label': 'Spreadsheet link' });
     const idMsg = h('p', { class: 'hint', role: 'status' }, 'The sheet must be shared so anyone with the link can view it.');
-    const kwInput = h('textarea', { class: 'input', rows: '3', spellcheck: 'false', 'aria-label': 'Keywords' }, A.UI.keywords.join(', '));
+    const kwInput = h('textarea', { class: 'input', rows: '4', spellcheck: 'false', 'aria-label': 'Keywords' }, A.keywordText(A.UI.kwGroups));
+    const exInput = h('textarea', { class: 'input', rows: '2', spellcheck: 'false', 'aria-label': 'Words to exclude' }, (A.UI.exclude || []).join(', '));
+    const prevInput = h('input', { class: 'input', type: 'text', value: prevId() && prevId() !== 'file' ? 'https://docs.google.com/spreadsheets/d/' + prevId() + '/edit' : '', placeholder: 'Optional: link to last season\u2019s sheet', spellcheck: 'false', 'aria-label': 'Last season\u2019s sheet' });
+    const prevMsg = h('p', { class: 'hint', role: 'status' }, A.prevInfo.busy ? 'Loading last season\u2026' : A.prev ? 'Loaded: ' + A.n(A.prev.apps.length) + ' replies' + (A.prevInfo.at ? ', saved ' + A.stamp(A.prevInfo.at) : '') + '.' : (A.prevInfo.error ? 'Could not load it. ' + A.prevInfo.error : ''));
+    const sugg = prevSuggestions();
+    const prevPick = h('input', { type: 'file', accept: '.xlsx', class: 'sr', id: 'prevPick' });
+    prevPick.addEventListener('change', () => { if (prevPick.files[0]) loadPrevFile(prevPick.files[0], prevMsg); prevPick.value = ''; });
+    const backupPick = h('input', { type: 'file', accept: '.json,application/json', class: 'sr', id: 'backupPick' });
+    const backupMsg = h('div', { class: 'hint', role: 'status' });
+    backupPick.addEventListener('change', async () => {
+      const f = backupPick.files[0]; backupPick.value = ''; if (!f) return;
+      A.clear(backupMsg);
+      try {
+        const b = A.backup.parse(await f.text());
+        const yes = h('button', { class: 'btn sm primary', type: 'button' }, 'Replace what is in this browser');
+        yes.addEventListener('click', () => { A.backup.restore(b.data); location.reload(); });
+        backupMsg.appendChild(h('div', null, 'Backup from ' + (b.exported ? A.stamp(Date.parse(b.exported)) : 'an unknown date') + ': ' + A.plural(b.apps, 'application') + ', ' + A.plural(b.notes, 'note') + ', ' + A.plural(b.saved, 'saved posting') + ', and your settings. Restoring replaces those in this browser.'));
+        backupMsg.appendChild(h('div', { class: 'acts', style: { marginTop: '6px', display: 'flex', gap: '6px' } }, yes, h('button', { class: 'btn sm', type: 'button', onClick: () => A.clear(backupMsg) }, 'Cancel')));
+      } catch (e) { backupMsg.textContent = e.message; }
+    });
     const hoursSel = h('select', { class: 'input', 'aria-label': 'Refresh interval' }, [[6, 'Every 6 hours'], [12, 'Every 12 hours'], [24, 'Once a day'], [48, 'Every 2 days']].map(([v, l]) => h('option', { value: String(v) }, l)));
     hoursSel.value = String(A.store.get('refreshHours', 24));
     const theme = A.store.get('theme', 'auto');
@@ -272,27 +349,54 @@
       if (raw && !id) { idMsg.textContent = 'That does not look like a Google Sheets link. Paste the full address from your browser.'; idInput.focus(); return; }
       const changed = id !== sheetId();
       if (id && id === DEFAULT_ID) A.store.del('sheetId'); else if (id) A.store.set('sheetId', id);
-      A.UI.keywords = kwInput.value.split(/[,\n]/).map(x => x.trim()).filter(Boolean);
-      A.store.set('keywords', A.UI.keywords);
+      const rawPrev = prevInput.value.trim();
+      const pid = rawPrev ? parseSheetId(rawPrev) : (prevId() === 'file' ? 'file' : '');
+      if (rawPrev && !pid) { prevMsg.textContent = 'That does not look like a Google Sheets link.'; prevInput.focus(); return; }
+      if (pid && pid === (id || sheetId())) { prevMsg.textContent = 'That is the current sheet. Paste last season\u2019s link instead.'; prevInput.focus(); return; }
+      const prevChanged = pid !== prevId();
+      if (pid) A.store.set('prevSheetId', pid); else A.store.del('prevSheetId');
+      A.UI.kwGroups = A.parseKeywords(kwInput.value);
+      A.UI.keywords = A.UI.kwGroups.flatMap(g => g.words);
+      A.UI.exclude = exInput.value.split(/[,\n;]/).map(x => x.trim()).filter(x => x.length > 1);
+      A.store.set('kwGroups', A.UI.kwGroups); A.store.set('exclude', A.UI.exclude); A.store.del('keywords');
+      if (prevChanged) { A.prev = null; A.prevInfo = { at: null, error: null, busy: false }; loadPrev(true); }
+      updateCounts();
       A.store.set('refreshHours', +hoursSel.value);
       closeDrawer();
       if (changed) { A.status.at = null; A.db = null; A.status.source = 'none'; loadInitial(); } else { updateStatus(); render(); }
     });
+    // Deleting everything needs a second click, because it also removes your applications and notes.
     const clear = h('button', { class: 'btn', type: 'button' }, 'Clear saved data');
+    let armed = null;
     clear.addEventListener('click', async () => {
-      await A.idb.del(cacheKey());
-      ['saved', 'lastVisit', 'keywords', 'sheetId', 'refreshHours', 'theme'].forEach(k => A.store.del(k));
+      if (!armed) {
+        clear.textContent = 'Click again to delete everything'; clear.classList.add('danger');
+        armed = setTimeout(() => { armed = null; clear.textContent = 'Clear saved data'; clear.classList.remove('danger'); }, 5000);
+        return;
+      }
+      await A.idb.del(cacheKey()); if (prevId()) await A.idb.del('wb:prev:' + prevId());
+      try { Object.keys(localStorage).filter(k => k.indexOf('fma.') === 0).forEach(k => localStorage.removeItem(k)); } catch (e) { /* storage blocked */ }
       location.reload();
     });
     el.drawer.appendChild(h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } }, h('h2', null, 'Settings'), h('button', { class: 'btn quiet icon', type: 'button', 'aria-label': 'Close settings', onClick: closeDrawer }, A.icon('x', 18))));
     el.drawer.appendChild(h('div', { class: 'field' }, h('label', null, 'Spreadsheet'), idInput, idMsg, h('p', { class: 'hint' }, 'Next season, paste the new sheet’s link here and the app will follow it.')));
+    el.drawer.appendChild(h('div', { class: 'field' }, h('label', null, 'Last season\u2019s sheet'), prevInput,
+      sugg.length ? h('div', { class: 'chips' }, h('span', { class: 'hint' }, 'From the Resources tab:'), sugg.map(x => h('button', { class: 'chipbtn', type: 'button', onClick: () => { prevInput.value = 'https://docs.google.com/spreadsheets/d/' + x.id + '/edit'; prevMsg.textContent = 'Press Save settings to load the ' + x.label + ' sheet.'; } }, x.label))) : null,
+      FILE_MODE || prevId() === 'file' ? h('div', null, h('label', { class: 'btn sm', for: 'prevPick', tabindex: '0' }, A.icon('file', 14), 'Choose last season\u2019s .xlsx'), prevPick) : null,
+      prevMsg, h('p', { class: 'hint' }, 'Optional. Lets My applications and institution pages compare this season with the last: when the first interviews came, and how this year\u2019s pace compares.')));
     el.drawer.appendChild(h('div', { class: 'field' }, h('label', null, 'Refresh'), hoursSel, h('p', { class: 'hint' }, 'The app checks while it is open and again whenever you come back to the tab. The Refresh button always fetches right away.')));
-    el.drawer.appendChild(h('div', { class: 'field' }, h('label', null, 'My keywords'), kwInput, h('p', { class: 'hint' }, 'Separate with commas. Postings whose text contains any of these get a highlight and appear under the keyword filter. Parts of words work: “microbiolog” finds microbiology and microbiologist.')));
+    el.drawer.appendChild(h('div', { class: 'field' }, h('label', null, 'My keywords'), kwInput, h('p', { class: 'hint' }, 'Separate words with commas. For several groups, put one per line with a name and a colon, for example \u201cMicrobiology: microbiolog, bacteri, pathogen\u201d. Parts of words work: \u201cmicrobiolog\u201d finds microbiology and microbiologist.')));
+    el.drawer.appendChild(h('div', { class: 'field' }, h('label', null, 'Words to exclude'), exInput, h('p', { class: 'hint' }, 'A posting that contains any of these no longer counts as a keyword match, for example \u201cchemistry, teaching-only\u201d. On Job postings you can also hide them.')));
     el.drawer.appendChild(h('div', { class: 'field' }, h('span', { class: 'lab' }, 'Appearance'), themeBtns));
     const inst = installField(); if (inst) el.drawer.appendChild(inst);
+    el.drawer.appendChild(h('div', { class: 'field' }, h('span', { class: 'lab' }, 'Back up and restore'),
+      h('div', { class: 'steps' }, h('button', { class: 'btn', type: 'button', onClick: () => A.backup.download() }, A.icon('download', 15), 'Download a backup'),
+        h('label', { class: 'btn', for: 'backupPick', tabindex: '0' }, A.icon('upload', 15), 'Restore from a backup'), backupPick),
+      backupMsg,
+      h('p', { class: 'hint' }, 'Your applications, notes, saved postings, keywords and settings live in this browser only. A backup is a small file: keep it safe, and restore it here or on another computer. The sheet data itself is not included.')));
     el.drawer.appendChild(h('div', { class: 'field' }, h('span', { class: 'lab' }, FILE_MODE ? 'Update the data' : 'Or load a downloaded workbook'), updateSteps(closeDrawer)));
     el.drawer.appendChild(h('div', { class: 'field', style: { display: 'flex', gap: '8px', flexDirection: 'row', marginTop: '26px' } }, save, clear));
-    el.drawer.appendChild(h('p', { class: 'hint', style: { marginTop: '26px' } }, 'Privacy: this page talks only to docs.google.com, to read the sheet. Saved postings, keywords and the cached workbook stay in this browser.'));
+    el.drawer.appendChild(h('p', { class: 'hint', style: { marginTop: '26px' } }, 'Privacy: this page talks only to docs.google.com, to read the sheets. Your applications, notes, saved postings, keywords and the cached workbooks stay in this browser.'));
   }
 
   /* ---------------- Boot ---------------- */
@@ -311,10 +415,14 @@
     }
     if (!A.db) render();
     if (due()) A.refresh({ manual: false });
+    loadPrev(false);
   }
 
   A.boot = function () {
-    A.UI.keywords = A.store.get('keywords', DEFAULT_KEYWORDS);
+    A.UI.kwGroups = A.store.get('kwGroups', null) || [{ name: 'My keywords', words: A.store.get('keywords', DEFAULT_KEYWORDS) }];
+    A.UI.keywords = A.UI.kwGroups.flatMap(g => g.words);
+    A.UI.exclude = A.store.get('exclude', []);
+    A.mine.load();
     A.UI.saved = new Set(A.store.get('saved', []));
     A.UI.prevVisit = A.store.get('lastVisit', null);
     const root = document.getElementById('app');
@@ -342,7 +450,7 @@
     window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); A.installPrompt = e; syncInstallBtn(); });
     window.addEventListener('appinstalled', () => { A.installPrompt = null; syncInstallBtn(); });
     el.themeBtn.addEventListener('click', () => { A.store.set('theme', isDark() ? 'light' : 'dark'); applyTheme(); render(); });
-    el.search.addEventListener('input', A.debounce(() => { const q = el.search.value.trim(); if (q) A.go('search', { q }); else if (parseRoute().name === 'search') A.go('overview'); }, 260));
+    el.search.addEventListener('input', A.debounce(() => { const q = el.search.value.trim(); if (q) A.go('search', { q }); else if (parseRoute().name === 'search') A.go('today'); }, 260));
     el.search.addEventListener('keydown', e => { if (e.key === 'Escape') { el.search.value = ''; el.search.blur(); } });
     document.addEventListener('keydown', e => {
       if (e.key === '/' && !/input|textarea|select/i.test((document.activeElement || {}).tagName || '')) { e.preventDefault(); el.search.focus(); el.search.select(); }
@@ -360,7 +468,7 @@
     if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (A.store.get('theme', 'auto') === 'auto') { applyTheme(); render(); } });
 
     // remember when you were last here, for "new since your last visit"
-    const stamp = () => A.store.set('lastVisit', Date.now());
+    const stamp = () => { A.store.set('lastVisit', Date.now()); A.seen.commit(A.db); };
     window.addEventListener('pagehide', stamp);
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') stamp(); else if (due() && !A.status.busy) A.refresh({ manual: false }); });
     setInterval(() => { if (document.visibilityState === 'visible' && due() && !A.status.busy) A.refresh({ manual: false }); }, 10 * 60e3);

@@ -2,7 +2,7 @@
    It keeps a copy of the app so it opens offline and can be installed.
    It only handles files from this site. Requests to Google go straight to the network, untouched,
    and no sheet data is ever stored here (the app keeps its own copy in the browser's IndexedDB). */
-const VERSION = 'atlas-2713c0a2fc';
+const VERSION = 'atlas-9d52f3c9a0';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', event => {

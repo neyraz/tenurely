@@ -19,6 +19,9 @@
     menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
     download: '<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',
     file: '<path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7z"/><path d="M14 3v4h4"/>',
+    check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    upload: '<path d="M12 20V9M7 13l5-5 5 5M5 4h14"/>',
   };
   A.icon = function (name, size, filled) {
     const svg = s('svg', { viewBox: '0 0 24 24', width: size || 16, height: size || 16, fill: filled ? 'currentColor' : 'none', stroke: 'currentColor', 'stroke-width': '1.8', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true', focusable: 'false' });

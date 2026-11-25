@@ -72,22 +72,21 @@
 
   A.keywordMatcher = function (keywords) {
     const k = (keywords || []).map(x => A.norm(x)).filter(x => x.length > 1);
-    return item => k.length > 0 && k.some(w => item.text.indexOf(w) >= 0);
+    return item => k.length > 0 && k.some(w => item.text.indexOf(w) >= 0) && !(A.isExcluded && A.isExcluded(item));
   };
 
   A.kpis = function (db, prevVisitMs, keywords) {
     const today = A.today();
     const match = A.keywordMatcher(keywords);
     const isRecent = p => p.dateMs !== null && p.dateMs >= today - 7 * A.DAY && p.dateMs <= today + 2 * A.DAY;
-    const sinceVisit = p => prevVisitMs && p.dateMs !== null && p.dateMs > A.today() - 0 && false;
-    const prevDay = prevVisitMs ? Math.floor(prevVisitMs / A.DAY) * A.DAY : null;
-    const isNew = p => prevDay !== null && p.dateMs !== null && p.dateMs > prevDay && p.dateMs <= today + 2 * A.DAY;
+    // "New" means the row was not in the sheet when you last left (see A.seen), not a date guess.
+    const isNew = p => A.seen.isNew(p, 'post');
     const P = db.postings;
     const kinds = A.count(db.apps, a => a.kind);
     return {
       postings: P.length,
       postingsWeek: P.filter(isRecent).length,
-      postingsNew: prevDay === null ? null : P.filter(isNew).length,
+      postingsNew: A.seen.ready ? P.filter(isNew).length : null,
       matching: P.filter(match).length,
       matchingWeek: P.filter(p => match(p) && isRecent(p)).length,
       apps: db.apps.length,

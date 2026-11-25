@@ -345,6 +345,30 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
 
 .setup .hint { color: var(--ink3); font-size: 12.5px; margin: 6px 0 0; }
 
+/* ---------- Daily use: Today, My applications, institution pages ---------- */
+.inst-link { color: inherit; text-decoration: none; }
+.inst-link:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.nav .ct.hot { color: var(--accent); font-weight: 700; opacity: 1; }
+.btn.on { background: var(--accent-wash); color: var(--accent); border-color: transparent; font-weight: 600; }
+.btn.danger { border-color: var(--serious); color: var(--serious); }
+.track-area:empty { display: none; }
+.mine-line { margin-top: 8px; font-size: 13px; color: var(--ink2); }
+.mine-line b { color: var(--ink); font-weight: 600; }
+.mine-note { margin-top: 6px; padding: 8px 11px; background: var(--accent-wash); border-radius: 6px; font-size: 13.5px; white-space: pre-line; overflow-wrap: anywhere; max-width: 80ch; }
+.editor { margin-top: 10px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface2); display: grid; gap: 10px; max-width: 760px; }
+.editor .ed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+.editor label { display: grid; gap: 4px; font-size: 12.5px; color: var(--ink2); font-weight: 600; }
+.editor .input { width: 100%; font-weight: 400; }
+.editor textarea.input { min-height: 66px; resize: vertical; height: auto; padding-top: 8px; }
+.editor .acts { display: flex; gap: 8px; flex-wrap: wrap; }
+.editor .hint:empty { display: none; }
+.timing { margin-top: 10px; display: grid; gap: 4px; font-size: 13px; color: var(--ink2); max-width: 82ch; }
+.timing b { color: var(--ink); font-weight: 600; }
+.mini.alert .t { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
+.mini .dept-same { color: var(--accent); font-weight: 600; }
+.newcount { color: var(--accent); font-weight: 600; }
+.drawer .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+
 </style>
 </head>
 <body>
@@ -1650,22 +1674,21 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
 
   A.keywordMatcher = function (keywords) {
     const k = (keywords || []).map(x => A.norm(x)).filter(x => x.length > 1);
-    return item => k.length > 0 && k.some(w => item.text.indexOf(w) >= 0);
+    return item => k.length > 0 && k.some(w => item.text.indexOf(w) >= 0) && !(A.isExcluded && A.isExcluded(item));
   };
 
   A.kpis = function (db, prevVisitMs, keywords) {
     const today = A.today();
     const match = A.keywordMatcher(keywords);
     const isRecent = p => p.dateMs !== null && p.dateMs >= today - 7 * A.DAY && p.dateMs <= today + 2 * A.DAY;
-    const sinceVisit = p => prevVisitMs && p.dateMs !== null && p.dateMs > A.today() - 0 && false;
-    const prevDay = prevVisitMs ? Math.floor(prevVisitMs / A.DAY) * A.DAY : null;
-    const isNew = p => prevDay !== null && p.dateMs !== null && p.dateMs > prevDay && p.dateMs <= today + 2 * A.DAY;
+    // "New" means the row was not in the sheet when you last left (see A.seen), not a date guess.
+    const isNew = p => A.seen.isNew(p, 'post');
     const P = db.postings;
     const kinds = A.count(db.apps, a => a.kind);
     return {
       postings: P.length,
       postingsWeek: P.filter(isRecent).length,
-      postingsNew: prevDay === null ? null : P.filter(isNew).length,
+      postingsNew: A.seen.ready ? P.filter(isNew).length : null,
       matching: P.filter(match).length,
       matchingWeek: P.filter(p => match(p) && isRecent(p)).length,
       apps: db.apps.length,
@@ -1735,6 +1758,9 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
     menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
     download: '<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',
     file: '<path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7z"/><path d="M14 3v4h4"/>',
+    check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    upload: '<path d="M12 20V9M7 13l5-5 5 5M5 4h14"/>',
   };
   A.icon = function (name, size, filled) {
     const svg = s('svg', { viewBox: '0 0 24 24', width: size || 16, height: size || 16, fill: filled ? 'currentColor' : 'none', stroke: 'currentColor', 'stroke-width': '1.8', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true', focusable: 'false' });
@@ -1932,6 +1958,266 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
     if (csvBtn) csvBtn.addEventListener('click', () => A.downloadCsv(cfg.csv.name, cfg.csv.cols.map(c => c[0]), current.map(it => cfg.csv.cols.map(c => c[1](it)))));
     draw();
     return root;
+  };
+})();
+
+/* ============================================================
+   Your own layer on top of the sheet. Everything here is kept in
+   this browser only: the applications you track, private notes,
+   what you have already seen, and your keyword groups.
+   ============================================================ */
+(function () {
+  const A = (globalThis.A = globalThis.A || {});
+
+  /* ---------- Institution names ----------
+     People type the same place in many ways ("UCSF", "University of California, San Francisco").
+     A key keeps only the distinctive words, after expanding common abbreviations. */
+  const STOP = new Set(['the', 'of', 'at', 'and', 'in', 'a', 'for', 's', 'university', 'univ', 'u', 'college', 'institute', 'school', 'campus', 'main']);
+  const UNIT = new Set(['medicine', 'medical', 'center', 'centre', 'health', 'hospital', 'system', 'langone', 'grossman', 'sciences', 'science', 'research', 'graduate']);
+  const ALIAS = [
+    [/\bbaylor college of medicine\b/g, 'bcm'], [/\boregon health (and )?sciences? university\b/g, 'ohsu'],
+    [/\bwashington university\b/g, 'washu'], [/\bwustl\b/g, 'washu'], [/\bwashu( in)? st louis\b/g, 'washu'], [/\buniversity of washington\b/g, 'uwash'],
+    [/\buva\b/g, 'virginia'], [/\butsw\b/g, 'texas southwestern'], [/\but\b/g, 'texas'], [/\butmb\b/g, 'texas medical branch'],
+    [/\bucsf\b/g, 'california san francisco'], [/\bucla\b/g, 'california los angeles'], [/\bucsd\b/g, 'california san diego'],
+    [/\bucsb\b/g, 'california santa barbara'], [/\buci\b/g, 'california irvine'], [/\bucr\b/g, 'california riverside'],
+    [/\bucsc\b/g, 'california santa cruz'], [/\bucb\b/g, 'california berkeley'], [/\buc\b/g, 'california'],
+    [/\bunc\b(?!\s*(charlotte|greensboro|wilmington|asheville|pembroke))/g, 'north carolina chapel hill'],
+    [/\buab\b/g, 'alabama birmingham'], [/\bu ?chicago\b/g, 'chicago'], [/\bu ?penn\b/g, 'pennsylvania'],
+    [/\bu ?mass\b/g, 'massachusetts'], [/\bmusc\b/g, 'medical south carolina'], [/\bnyu\b/g, 'new york'],
+    [/\buw madison\b/g, 'wisconsin madison'], [/\bu ?mich\b/g, 'michigan'], [/\buiuc\b/g, 'illinois urbana champaign'],
+    [/\bmit\b/g, 'massachusetts technology'], [/\bcaltech\b/g, 'california technology'], [/\bcshl\b/g, 'cold spring harbor laboratory'],
+    [/\bcmu\b/g, 'carnegie mellon'], [/\busc\b/g, 'southern california'], [/\bucf\b/g, 'central florida'], [/\busf\b/g, 'south florida'],
+    [/\blsu\b/g, 'louisiana state'], [/\bpsu\b/g, 'penn state'], [/\buconn\b/g, 'connecticut'], [/\bjhu\b/g, 'johns hopkins'],
+    [/\bupitt\b/g, 'pittsburgh'], [/\bumn\b/g, 'minnesota'], [/\bumd\b/g, 'maryland'], [/\bunm\b/g, 'new mexico'],
+    [/\bunl\b/g, 'nebraska lincoln'], [/\bunmc\b/g, 'nebraska medical center'], [/\bvu\b/g, 'vanderbilt'], [/\bsaint\b/g, 'st'],
+  ];
+  const memo = new Map();
+  A.instKey = function (name) {
+    const raw = String(name || '');
+    if (memo.has(raw)) return memo.get(raw);
+    let s = raw.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/https?:\S+/g, ' ').replace(/&/g, ' and ').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+    ALIAS.forEach(([re, to]) => { s = s.replace(re, to); });
+    const set = new Set(s.split(' ').filter(w => w && !STOP.has(w)));
+    const low = raw.toLowerCase();
+    const type = /\buniv(ersity|\.)?\b/.test(low) ? 'u' : (/\bcollege\b(?!\s+of\b)/.test(low) ? 'c' : '');
+    const core = [...set].filter(w => !UNIT.has(w)).sort().join(' ');
+    const k = { key: [...set].sort().join(' '), core, type };
+    memo.set(raw, k);
+    return k;
+  };
+  function osa(a, b) { // edit distance where swapping two neighbouring letters counts as one edit
+    const d = [];
+    for (let i = 0; i <= a.length; i++) d[i] = [i];
+    for (let j = 0; j <= b.length; j++) d[0][j] = j;
+    for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) {
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+    }
+    return d[a.length][b.length];
+  }
+  /* Same institution? Same key, or the same core words once "medical center"-type words are set aside,
+     or one long word with a single typo. "Boston College" and "Boston University" stay apart. */
+  A.sameInst = function (a, b) {
+    const x = A.instKey(a), y = A.instKey(b);
+    if (!x.key || !y.key) return false;
+    if (x.type && y.type && x.type !== y.type) return false;
+    if (x.key === y.key) return true;
+    if (x.core && x.core === y.core) return true;
+    const ax = x.core.split(' '), ay = y.core.split(' ');
+    if (!x.core || ax.length !== ay.length) return false;
+    const diff = ax.map((w, i) => [w, ay[i]]).filter(([p, q]) => p !== q);
+    return diff.length === 1 && diff[0][0].length >= 7 && osa(diff[0][0], diff[0][1]) <= 1;
+  };
+
+  /* Do two department descriptions share a real subject word? 'same' | 'other' | 'unknown' */
+  const DSTOP = new Set(['department', 'dept', 'school', 'program', 'programs', 'division', 'and', 'the', 'of', 'for', 'in', 'sciences', 'science', 'studies', 'faculty', 'college', 'institute', 'center', 'centre']);
+  const dwords = s => new Set(A.norm(s).replace(/[^a-z0-9 ]+/g, ' ').split(/\s+/).filter(w => w.length >= 4 && !DSTOP.has(w)).map(w => w.replace(/(ies|y|s)$/, '')));
+  A.deptMatch = function (a, b) {
+    const x = dwords(a), y = dwords(b);
+    if (!x.size || !y.size) return 'unknown';
+    for (const w of x) if (y.has(w)) return 'same';
+    return 'other';
+  };
+
+  /* ---------- What you have already seen ----------
+     Each row gets a short fingerprint. Whatever was in the sheet when you last left is "seen";
+     anything else is new. Threads and Q&A rows also remember how many replies they had. */
+  function fnv(str) {
+    let x = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) { x ^= str.charCodeAt(i); x = Math.imul(x, 0x01000193); }
+    return (x >>> 0).toString(36);
+  }
+  const N = A.norm;
+  const FP = {
+    post: p => A.postKey(p),
+    app: a => [N(a.institution), N(a.department), a.response, a.date, a.submitted].join('|'),
+    nores: r => [N(r.institution), N(r.department), r.date, r.deadline].join('|'),
+    offer: o => [N(o.institution), N(o.department), o.date, o.status].join('|'),
+    froz: o => [N(o.institution), N(o.department), o.date, o.status].join('|'),
+    fail: o => [N(o.institution), N(o.department), o.date, o.status].join('|'),
+    cult: c => [N(c.institution), N(c.department), N(c.question)].join('|'),
+    loc: l => [N(l.city), N(l.question)].join('|'),
+    nego: n => [n.label, n.date, n.salaryOffered, n.startupOffered].join('|'),
+    com: t => N(t.messages[0]), visa: t => N(t.messages[0]), joy: t => N(t.messages[0]),
+  };
+  const COUNT = { cult: c => c.notes.length, loc: l => l.notes.length + (l.pros ? 1 : 0) + (l.cons ? 1 : 0), com: t => t.messages.length, visa: t => t.messages.length, joy: t => t.messages.length };
+  const TABS = { post: 'postings', app: 'apps', nores: 'noresp', offer: 'offers', froz: 'frozen', fail: 'failed', cult: 'culture', loc: 'locs', nego: 'nego', com: 'comments', visa: 'visa', joy: 'happy' };
+  A.KIND_OF_TAB = Object.fromEntries(Object.entries(TABS).map(([k, v]) => [v, k]));
+
+  A.seen = {
+    key: null, base: null,
+    get ready() { return !!this.base; },
+    init(key) { if (this.key === key) return; this.key = key; this.base = A.store.get('seen:' + key, null); },
+    fp(kind, item) { return item.__fp || (item.__fp = kind[0] + fnv(kind + '|' + FP[kind](item))); },
+    isNew(item, kind) { return this.ready && !(this.fp(kind, item) in this.base); },
+    newReplies(item, kind) {
+      if (!this.ready || !COUNT[kind]) return 0;
+      const f = this.fp(kind, item);
+      return f in this.base ? Math.max(0, COUNT[kind](item) - this.base[f]) : 0;
+    },
+    changed(item, kind) { return this.isNew(item, kind) || this.newReplies(item, kind) > 0; },
+    snapshot(db) {
+      const m = {};
+      Object.entries(TABS).forEach(([kind, tab]) => (db[tab] || []).forEach(it => { m[this.fp(kind, it)] = COUNT[kind] ? COUNT[kind](it) : 1; }));
+      return m;
+    },
+    commit(db) { if (db && this.key) A.store.set('seen:' + this.key, this.snapshot(db)); },
+    markAll(db) { this.base = this.snapshot(db); this.commit(db); },
+    forget(key) { A.store.del('seen:' + key); if (this.key === key) this.base = null; },
+  };
+
+  /* ---------- Keyword groups ----------
+     Settings text, one group per line: "Microbiology: microbiolog, bacteri, pathogen". A line without a
+     name joins the first group. Excluded words stop a posting from counting as a match. */
+  A.parseKeywords = function (text) {
+    const groups = []; let plain = null;
+    String(text || '').split(/\n+/).forEach(line => {
+      line = line.trim(); if (!line) return;
+      const m = line.match(/^([^:,]{1,40}):\s*(.*)$/);
+      const words = (m ? m[2] : line).split(/[,;]/).map(w => w.trim()).filter(w => w.length > 1);
+      if (!words.length) return;
+      if (m) groups.push({ name: m[1].trim(), words });
+      else { if (!plain) plain = { name: 'My keywords', words: [] }; plain.words.push(...words); }
+    });
+    return (plain ? [plain] : []).concat(groups).map(g => ({ name: g.name, words: [...new Set(g.words)] }));
+  };
+  A.keywordText = groups => groups.map(g => (groups.length > 1 || g.name !== 'My keywords' ? g.name + ': ' : '') + g.words.join(', ')).join('\n');
+  A.kwGroupsOf = function (item) {
+    const U = A.UI;
+    if (!U.kwGroups || !U.kwGroups.length) return [];
+    if (A.isExcluded(item)) return [];
+    return U.kwGroups.filter(g => g.words.some(w => item.text.indexOf(A.norm(w)) >= 0)).map(g => g.name);
+  };
+  A.isExcluded = item => (A.UI.exclude || []).some(w => w.length > 1 && item.text.indexOf(A.norm(w)) >= 0);
+
+  /* A list filter for rows that are new, or have new replies, since your last visit. */
+  A.newToggle = (kind, label) => (A.seen.ready ? { key: 'new', label: label || 'New since my last visit', test: it => A.seen.changed(it, kind) } : null);
+
+  /* ---------- Your applications ---------- */
+  A.STATUS = ['Applied', 'Remote interview', 'Onsite interview', 'Offer', 'Rejected', 'Withdrawn'];
+  A.mine = {
+    data: null,
+    load() { this.data = A.store.get('mine', {}) || {}; return this; },
+    save() { A.store.set('mine', this.data); },
+    all() { return Object.values(this.data || {}); },
+    tracked() { return this.all().filter(e => e.applied || (e.status && e.status !== '')); },
+    get(id) { return (this.data || {})[id] || null; },
+    forPosting(p) { return this.get('p:' + A.postKey(p)); },
+    put(e) { e.updated = Date.now(); if (!e.created) e.created = e.updated; this.data[e.id] = e; this.save(); },
+    del(id) { delete this.data[id]; this.save(); },
+    fromPosting(p) {
+      return { id: 'p:' + A.postKey(p), post: A.postKey(p), institution: p.university || '', department: p.department || '', location: p.location || '', url: p.url || '', field: p.field || '', rank: p.rank || '', applied: '', deadline: '', status: '', note: '' };
+    },
+    manual(fields) { return Object.assign({ id: 'm:' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), post: '', location: '', url: '', field: A.fieldBucket(fields.department || ''), rank: '', applied: '', deadline: '', status: '', note: '' }, fields); },
+  };
+  A.isoDay = t => new Date(t).toISOString().slice(0, 10);
+
+  /* Everything the sheet reports from the places you applied. */
+  const SOURCES = [
+    ['apps', 'app', a => a.kind, a => a.respondedMs || a.addedMs, a => [a.department, a.specialty].filter(Boolean).join(' ')],
+    ['noresp', 'nores', () => 'No response yet', r => r.dateMs, r => r.department],
+    ['offers', 'offer', o => 'Offer ' + (o.status ? '(' + o.status.toLowerCase() + ')' : 'reported'), o => o.dateMs, o => o.department],
+    ['frozen', 'froz', o => 'Search ' + (o.status || 'frozen or cancelled').toLowerCase(), o => o.dateMs, o => o.department],
+    ['failed', 'fail', o => 'Search failed', o => o.dateMs, o => o.department],
+  ];
+  A.reportsAt = function (db, institution, department) {
+    const out = [];
+    if (!db) return out;
+    SOURCES.forEach(([tab, kind, label, when, dept]) => (db[tab] || []).forEach(it => {
+      if (!A.sameInst(institution, it.institution)) return;
+      out.push({ item: it, tab, kind, label: label(it), when: when(it), dept: department === undefined ? 'unknown' : A.deptMatch(department, dept(it)), isNew: A.seen.isNew(it, kind) });
+    }));
+    return out.sort((a, b) => (b.when || 0) - (a.when || 0));
+  };
+  A.myAlerts = function (db) {
+    const out = [];
+    A.mine.tracked().forEach(e => A.reportsAt(db, e.institution, e.department).forEach(r => out.push(Object.assign({ entry: e }, r))));
+    return out.sort((a, b) => (b.isNew - a.isNew) || (a.dept === 'other') - (b.dept === 'other') || (b.when || 0) - (a.when || 0));
+  };
+
+  /* ---------- Timing: is this silence normal? ---------- */
+  A.fieldTiming = function (db, field) {
+    const d = (db.apps || []).filter(a => a.daysToResponse !== null && (!field || a.field === field)).map(a => a.daysToResponse);
+    if (d.length < 5) return null;
+    return { n: d.length, median: A.median(d), p75: A.quantile(d, 0.75), field };
+  };
+  /* Last season: when did this institution first report each kind of reply? */
+  A.seasonFirsts = function (db, institution) {
+    if (!db) return [];
+    const by = new Map();
+    (db.apps || []).forEach(a => {
+      if (!A.sameInst(institution, a.institution)) return;
+      const t = a.respondedMs || a.addedMs;
+      if (!t || (db.win && (t < db.win.lo || t > db.win.hi))) return;
+      const cur = by.get(a.kind);
+      if (!cur || t < cur.t) by.set(a.kind, { kind: a.kind, t, n: (cur ? cur.n : 0) + 1 }); else cur.n++;
+    });
+    return A.RESP_ORDER.filter(k => by.has(k)).map(k => by.get(k));
+  };
+  /* Share of last season's interview reports that had come in by this calendar date. */
+  A.seasonPace = function (prev) {
+    if (!prev) return null;
+    const t = (prev.apps || []).filter(a => a.kind === 'Remote interview' || a.kind === 'Onsite interview').map(a => a.respondedMs || a.addedMs).filter(x => x && (!prev.win || (x >= prev.win.lo && x <= prev.win.hi)));
+    if (t.length < 20) return null;
+    const d = new Date(A.today()); d.setUTCFullYear(d.getUTCFullYear() - 1);
+    return { n: t.length, share: t.filter(x => x <= d.getTime()).length / t.length, asOf: d.getTime() };
+  };
+
+  /* ---------- Backup ---------- */
+  const SETTINGS = ['sheetId', 'prevSheetId', 'kwGroups', 'exclude', 'keywords', 'refreshHours', 'theme'];
+  A.backup = {
+    make() {
+      const settings = {};
+      SETTINGS.forEach(k => { const v = A.store.get(k, undefined); if (v !== undefined && v !== null) settings[k] = v; });
+      return { app: 'faculty-market-atlas', version: 1, exported: new Date().toISOString(), settings, saved: A.store.get('saved', []), mine: A.store.get('mine', {}) };
+    },
+    download() {
+      const blob = new Blob([JSON.stringify(this.make(), null, 1)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = A.h('a', { href: url, download: 'faculty-market-atlas-backup-' + A.isoDay(Date.now()) + '.json' });
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    },
+    parse(text) {
+      let j;
+      try { j = JSON.parse(text); } catch (e) { throw new Error('This is not a backup file from this app.'); }
+      if (!j || j.app !== 'faculty-market-atlas') throw new Error('This is not a backup file from this app.');
+      return { data: j, apps: Object.values(j.mine || {}).filter(e => e.applied || e.status).length, notes: Object.values(j.mine || {}).filter(e => e.note).length, saved: (j.saved || []).length, exported: j.exported };
+    },
+    restore(j) {
+      SETTINGS.forEach(k => A.store.del(k));
+      Object.entries(j.settings || {}).forEach(([k, v]) => { if (SETTINGS.includes(k)) A.store.set(k, v); });
+      A.store.set('saved', Array.isArray(j.saved) ? j.saved : []);
+      A.store.set('mine', j.mine && typeof j.mine === 'object' ? j.mine : {});
+    },
+  };
+
+  /* ---------- App icon badge (installed app in Chrome or Edge) ---------- */
+  A.updateBadge = function (n) {
+    try {
+      if (!('setAppBadge' in navigator)) return;
+      if (n > 0) navigator.setAppBadge(n).catch(() => {}); else navigator.clearAppBadge().catch(() => {});
+    } catch (e) { /* not supported */ }
   };
 })();
 
@@ -2198,22 +2484,26 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
         { key: 'rank', label: 'Levels', values: p => p.rankKind },
         { key: 'state', label: 'States', values: p => p.state || '', fmt: stateName },
         { key: 'cat', label: 'Types', values: p => p.categoryLabel },
-      ],
+        U.kwGroups.length > 1 ? { key: 'group', label: 'Keyword groups', values: p => A.kwGroupsOf(p) } : null,
+      ].filter(Boolean),
       toggles: [
         { key: 'week', label: 'Added in the past 7 days', test: k.isRecent },
-        U.prevVisit ? { key: 'new', label: 'New since my last visit', test: k.isNew } : null,
+        A.seen.ready ? { key: 'new', label: 'New since my last visit', test: k.isNew } : null,
         kw ? { key: 'kw', label: kw, test: k.match } : null,
         { key: 'saved', label: 'Saved', test: p => U.saved.has(A.postKey(p)) },
+        { key: 'mine', label: 'In my applications', test: p => !!(A.mine.forPosting(p) && (A.mine.forPosting(p).applied || A.mine.forPosting(p).status)) },
         { key: 'notes', label: 'Has comments', test: p => p.notes.length > 0 },
+        (U.exclude || []).length ? { key: 'hideEx', label: 'Hide excluded words', test: p => !A.isExcluded(p) } : null,
       ].filter(Boolean),
       sorts: [{ key: 'new', label: 'Newest first', cmp: newest }, { key: 'old', label: 'Oldest first', cmp: oldest }, { key: 'az', label: 'Institution A to Z', cmp: alpha('university') }],
       csv: { name: 'faculty-postings.csv', cols: [['Date added', p => (p.dateMs ? new Date(p.dateMs).toISOString().slice(0, 10) : p.date)], ['Institution', p => p.university], ['Department', p => p.department], ['Location', p => p.location], ['Discipline', p => p.discipline], ['Level', p => p.rank], ['Type', p => p.category], ['Link', p => p.url], ['Comments', p => p.notes.join(' | ')]] },
       row: (p, ctx) => {
         const key = A.postKey(p);
+        const tc = A.trackControls(p);
         const star = h('button', { class: 'star', type: 'button', 'aria-pressed': String(U.saved.has(key)), title: 'Save this posting (kept in this browser only)', 'aria-label': 'Save ' + p.university }, A.icon('star', 18, U.saved.has(key)));
         star.addEventListener('click', () => { A.toggleSaved(key); const on = U.saved.has(key); star.setAttribute('aria-pressed', String(on)); A.clear(star); star.appendChild(A.icon('star', 18, on)); });
         const chips = h('div', { class: 'chips' },
-          k.match(p) ? A.chip('Matches your keywords', 'accent') : null,
+          ...(U.kwGroups.length > 1 ? A.kwGroupsOf(p).map(g => A.chip(g, 'accent')) : [k.match(p) ? A.chip('Matches your keywords', 'accent') : null]),
           p.field !== 'Not stated' ? A.chip(p.field, '', () => A.go('postings', { field: p.field })) : null,
           p.rankKind !== 'Not stated' ? A.chip(p.rank && p.rank.length < 34 ? p.rank : p.rankKind) : null,
           p.category ? A.chip(p.category) : null,
@@ -2221,10 +2511,10 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
         return h('article', { class: 'row' },
           star,
           h('div', { class: 'row-main' },
-            h('h4', { class: 'row-title' }, A.rich(p.university || 'Untitled posting', ctx.re), k.isNew(p) ? h('span', { class: 'pill-new' }, 'New') : null),
+            h('h4', { class: 'row-title' }, p.university ? A.instLink(p.university, ctx.re) : 'Untitled posting', k.isNew(p) ? h('span', { class: 'pill-new' }, 'New') : null),
             p.department ? h('p', { class: 'row-sub' }, A.rich(p.department, ctx.re)) : null,
-            chips, A.notesBlock(p.notes, ctx.re, 2)),
-          h('div', { class: 'row-side' }, h('time', null, A.fmtDate(p.dateMs)), p.url ? A.extButton(p.url) : h('span', null, 'No link')));
+            chips, A.notesBlock(p.notes, ctx.re, 2), tc.area),
+          h('div', { class: 'row-side' }, h('time', null, A.fmtDate(p.dateMs)), tc.btn, p.url ? A.extButton(p.url) : h('span', null, 'No link')));
       },
     }));
     return root;
@@ -2251,7 +2541,7 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
         { key: 'state', label: 'States', values: a => a.state || '', fmt: stateName },
         { key: 'field', label: 'Fields', values: a => a.field },
       ],
-      toggles: [{ key: 'notes', label: 'Has notes', test: a => a.noteList.length > 0 }, { key: 'link', label: 'Has job ad link', test: a => !!a.url }],
+      toggles: [A.newToggle('app'), { key: 'notes', label: 'Has notes', test: a => a.noteList.length > 0 }, { key: 'link', label: 'Has job ad link', test: a => !!a.url }].filter(Boolean),
       sorts: [
         { key: 'new', label: 'Newest first', cmp: (a, b) => (b.addedMs || 0) - (a.addedMs || 0) || b.row - a.row },
         { key: 'old', label: 'Oldest first', cmp: (a, b) => (a.addedMs === null ? 1 : b.addedMs === null ? -1 : a.addedMs - b.addedMs) || a.row - b.row },
@@ -2261,7 +2551,7 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
       csv: { name: 'faculty-applications.csv', cols: [['Added', a => a.date], ['Institution', a => a.institution], ['Department', a => a.department], ['Specialty', a => a.specialty], ['Location', a => a.location], ['Level', a => a.position], ['Reply', a => a.response], ['Submitted', a => a.submitted], ['Reply date', a => a.responseDate], ['Notes', a => a.noteList.join(' | ')], ['Job ad', a => a.url]] },
       row: (a, ctx) => h('article', { class: 'row nostar' },
         h('div', { class: 'row-main' },
-          h('h4', { class: 'row-title' }, A.rich(a.institution, ctx.re)),
+          h('h4', { class: 'row-title' }, A.instLink(a.institution, ctx.re), A.seen.isNew(a, 'app') ? h('span', { class: 'pill-new' }, 'New') : null),
           joinText([a.department, a.specialty]) ? h('p', { class: 'row-sub' }, A.rich(joinText([a.department, a.specialty]), ctx.re)) : null,
           h('div', { class: 'chips' },
             h('span', { class: 'badge' }, h('i', { style: { background: A.RESP_COLOR[a.kind] || 'var(--axis)' } }), a.response || a.kind),
@@ -2283,14 +2573,14 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
       id: 'noresponse', items: D.noresp, noun: 'reports', params,
       placeholder: 'Search institution, department, city or comment',
       filters: [{ key: 'state', label: 'States', values: r => r.state || '', fmt: stateName }, { key: 'rank', label: 'Levels', values: r => A.rankBucket(r.rank) }],
-      toggles: [{ key: 'notes', label: 'Has comments', test: r => r.notes.length > 0 }],
+      toggles: [A.newToggle('nores'), { key: 'notes', label: 'Has comments', test: r => r.notes.length > 0 }].filter(Boolean),
       sorts: [{ key: 'new', label: 'Newest first', cmp: newest }, { key: 'wait', label: 'Longest since deadline', cmp: (a, b) => (a.deadlineMs === null ? 1 : b.deadlineMs === null ? -1 : a.deadlineMs - b.deadlineMs) }, { key: 'az', label: 'Institution A to Z', cmp: alpha('institution') }],
       csv: { name: 'faculty-no-response.csv', cols: [['Date', r => r.date], ['Institution', r => r.institution], ['Deadline', r => r.deadline], ['Department', r => r.department], ['Level', r => r.rank], ['Location', r => r.location], ['Job ad', r => r.url], ['Comments', r => r.notes.join(' | ')]] },
       row: (r, ctx) => {
         const since = A.daysSince(r.deadlineMs);
         return h('article', { class: 'row nostar' },
           h('div', { class: 'row-main' },
-            h('h4', { class: 'row-title' }, A.rich(r.institution, ctx.re)),
+            h('h4', { class: 'row-title' }, A.instLink(r.institution, ctx.re), A.seen.isNew(r, 'nores') ? h('span', { class: 'pill-new' }, 'New') : null),
             r.department ? h('p', { class: 'row-sub' }, A.rich(r.department, ctx.re)) : null,
             h('div', { class: 'chips' }, r.rank ? A.chip(r.rank) : null, r.location ? A.chip(r.location) : null,
               r.deadlineMs ? A.chip('Deadline ' + A.fmtDate(r.deadlineMs) + (since !== null && since >= 0 ? ' (' + A.plural(since, 'day') + ' ago)' : '')) : (r.deadline ? A.chip('Deadline: ' + r.deadline) : null)),
@@ -2313,16 +2603,16 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
     };
     root.appendChild(block('Offers reported', 'Self-reported by candidates. The first entry is often a leftover example from the previous season.', D.offers, o => h('article', { class: 'row nostar' },
       h('div', { class: 'row-main' },
-        h('h4', { class: 'row-title' }, o.institution, A.badge(o.status || 'Reported', o.status && /accept/i.test(o.status) ? 'var(--s3)' : 'var(--axis)')),
+        h('h4', { class: 'row-title' }, A.instLink(o.institution), A.badge(o.status || 'Reported', o.status && /accept/i.test(o.status) ? 'var(--s3)' : 'var(--axis)')),
         o.department ? h('p', { class: 'row-sub' }, o.department) : null,
         h('div', { class: 'chips' }, o.position ? A.chip(o.position) : null, o.location ? A.chip(o.location) : null, o.lastCycle ? A.chip('Previous season') : null),
         A.notesBlock(o.notes, null, 2)),
       h('div', { class: 'row-side' }, h('time', null, o.dateMs ? A.fmtDate(o.dateMs) : o.date), o.url ? A.extButton(o.url, 'Source') : (o.source ? h('span', null, o.source) : null)))));
     root.appendChild(block('Frozen or cancelled searches', null, D.frozen, f => h('article', { class: 'row nostar' },
-      h('div', { class: 'row-main' }, h('h4', { class: 'row-title' }, f.institution), f.department ? h('p', { class: 'row-sub' }, f.department) : null, h('div', { class: 'chips' }, f.status ? A.chip(f.status, 'accent') : null), A.notesBlock(f.notes, null, 2)),
+      h('div', { class: 'row-main' }, h('h4', { class: 'row-title' }, A.instLink(f.institution)), f.department ? h('p', { class: 'row-sub' }, f.department) : null, h('div', { class: 'chips' }, f.status ? A.chip(f.status, 'accent') : null), A.notesBlock(f.notes, null, 2)),
       h('div', { class: 'row-side' }, h('time', null, f.dateMs ? A.fmtDate(f.dateMs) : f.date)))));
     root.appendChild(block('Failed searches', null, D.failed, f => h('article', { class: 'row nostar' },
-      h('div', { class: 'row-main' }, h('h4', { class: 'row-title' }, f.institution), f.department ? h('p', { class: 'row-sub' }, f.department) : null,
+      h('div', { class: 'row-main' }, h('h4', { class: 'row-title' }, A.instLink(f.institution)), f.department ? h('p', { class: 'row-sub' }, f.department) : null,
         h('div', { class: 'chips' }, f.status ? A.chip(f.status, 'accent') : null, f.confirmed ? A.chip('Confirmed: ' + f.confirmed) : null, f.source ? A.chip('Source: ' + f.source) : null),
         f.info ? h('div', { class: 'notes' }, h('div', { class: 'note' }, A.rich(f.info))) : null),
       h('div', { class: 'row-side' }, h('time', null, f.dateMs ? A.fmtDate(f.dateMs) : f.date)))));
@@ -2343,7 +2633,7 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
       id: 'negotiations', items: D.nego, noun: 'packages', params,
       placeholder: 'Search type, field, region or comment',
       filters: [{ key: 'type', label: 'Institution types', values: n => n.type }, { key: 'prior', label: 'Prior roles', values: n => n.prior }],
-      toggles: [{ key: 'notes', label: 'Has comments', test: n => n.notes.length > 0 }],
+      toggles: [A.newToggle('nego'), { key: 'notes', label: 'Has comments', test: n => n.notes.length > 0 }].filter(Boolean),
       sorts: [{ key: 'new', label: 'Newest first', cmp: newest }, { key: 'old', label: 'Oldest first', cmp: oldest }],
       csv: { name: 'faculty-negotiations.csv', cols: [['Date', n => n.date], ['Type', n => n.type], ['Field', n => n.field], ['Region', n => n.region], ['Prior position', n => n.prior], ['Salary offered', n => n.salaryOffered], ['Salary asked', n => n.salaryAsked], ['Salary granted', n => n.salaryGranted], ['Startup offered', n => n.startupOffered], ['Startup asked', n => n.startupAsked], ['Startup granted', n => n.startupGranted], ['Salary type', n => n.salaryType], ['Teaching', n => n.teaching], ['Comments', n => n.notes.join(' | ')]] },
       row: (n, ctx) => h('article', { class: 'row nostar' },
@@ -2367,10 +2657,10 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
     root.appendChild(A.listView({
       id: 'culture', items: D.culture, noun: 'questions', params, pageSize: 25,
       placeholder: 'Search institution, department or comment',
-      toggles: [{ key: 'answered', label: 'Has answers', test: c => c.notes.length > 0 }, { key: 'open', label: 'Still unanswered', test: c => c.notes.length === 0 }],
+      toggles: [A.newToggle('cult', 'New or newly answered'), { key: 'answered', label: 'Has answers', test: c => c.notes.length > 0 }, { key: 'open', label: 'Still unanswered', test: c => c.notes.length === 0 }].filter(Boolean),
       sorts: [{ key: 'new', label: 'Newest first', cmp: (a, b) => b.row - a.row }, { key: 'old', label: 'Oldest first', cmp: (a, b) => a.row - b.row }, { key: 'az', label: 'Institution A to Z', cmp: alpha('institution') }],
       row: (c, ctx) => A.thread(
-        h('div', { class: 'thread-head' }, h('b', null, A.rich(c.institution || 'Unnamed institution', ctx.re)), c.department && c.department !== 'any' ? h('span', null, A.rich(c.department, ctx.re)) : null, c.dateMs ? h('span', null, A.fmtDate(c.dateMs)) : null),
+        h('div', { class: 'thread-head' }, h('b', null, c.institution ? A.instLink(c.institution, ctx.re) : 'Unnamed institution'), A.seen.isNew(c, 'cult') ? h('span', { class: 'pill-new' }, 'New') : (A.seen.newReplies(c, 'cult') ? h('span', { class: 'pill-new' }, A.plural(A.seen.newReplies(c, 'cult'), 'new answer')) : null), c.department && c.department !== 'any' ? h('span', null, A.rich(c.department, ctx.re)) : null, c.dateMs ? h('span', null, A.fmtDate(c.dateMs)) : null),
         [c.question || '(no question text)'].concat(c.notes), ctx.re, 3),
     }));
     return root;
@@ -2384,7 +2674,7 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
       id: 'locations', items: D.locs, noun: 'places', params, pageSize: 25,
       placeholder: 'Search a city, a question or a comment',
       filters: [{ key: 'state', label: 'States', values: l => l.state || '', fmt: stateName }],
-      toggles: [{ key: 'answered', label: 'Has answers', test: l => l.answered }, { key: 'open', label: 'Still unanswered', test: l => !l.answered }],
+      toggles: [A.newToggle('loc', 'New or newly answered'), { key: 'answered', label: 'Has answers', test: l => l.answered }, { key: 'open', label: 'Still unanswered', test: l => !l.answered }].filter(Boolean),
       sorts: [{ key: 'az', label: 'Place A to Z', cmp: alpha('city') }, { key: 'new', label: 'Newest first', cmp: (a, b) => b.row - a.row }, { key: 'most', label: 'Most replies', cmp: (a, b) => b.notes.length - a.notes.length }],
       row: (l, ctx) => {
         const el = h('article', { class: 'thread' },
@@ -2402,6 +2692,7 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
   A.views.community = function (params) {
     const D = A.db;
     const tabs = [{ id: 'comments', label: 'Conversations', items: D.comments, ph: 'Search the conversations' }, { id: 'visa', label: 'Visas and immigration', items: D.visa, ph: 'Search visa and immigration threads' }, { id: 'happy', label: 'Happy tab', items: D.happy, ph: 'Search the happy tab' }];
+    const KIND = { comments: 'com', visa: 'visa', happy: 'joy' };
     const tabState = A.UI.state.communityTab || (A.UI.state.communityTab = { id: 'comments' });
     if (params.tab) tabState.id = params.tab;
     const root = h('div', null, A.pageHead('Community conversations', 'The anonymous comment board. Newest threads come first; replies are shown in the order they were posted.'));
@@ -2414,9 +2705,9 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
       body.appendChild(A.listView({
         id: 'community-' + t.id, items: t.items, noun: 'threads', params: params.tab ? Object.assign({}, params, { tab: undefined }) : params, pageSize: 30,
         placeholder: t.ph,
-        toggles: [{ key: 'week', label: 'Past 7 days', test: c => c.dateMs !== null && c.dateMs >= today - 7 * A.DAY && c.dateMs <= today + 2 * A.DAY }, { key: 'replies', label: 'Has replies', test: c => c.messages.length > 1 }],
+        toggles: [A.newToggle(KIND[t.id], 'New or with new replies'), { key: 'week', label: 'Past 7 days', test: c => c.dateMs !== null && c.dateMs >= today - 7 * A.DAY && c.dateMs <= today + 2 * A.DAY }, { key: 'replies', label: 'Has replies', test: c => c.messages.length > 1 }].filter(Boolean),
         sorts: [{ key: 'new', label: 'Newest first', cmp: (a, b) => b.row - a.row }, { key: 'old', label: 'Oldest first', cmp: (a, b) => a.row - b.row }, { key: 'busy', label: 'Most replies', cmp: (a, b) => b.messages.length - a.messages.length || b.row - a.row }],
-        row: (c, ctx) => A.thread(h('div', { class: 'thread-head' }, c.dateMs ? h('span', null, A.fmtDate(c.dateMs)) : (c.date ? h('span', null, c.date) : null)), c.messages, ctx.re, 3),
+        row: (c, ctx) => A.thread(h('div', { class: 'thread-head' }, c.dateMs ? h('span', null, A.fmtDate(c.dateMs)) : (c.date ? h('span', null, c.date) : null), A.seen.isNew(c, KIND[t.id]) ? h('span', { class: 'pill-new' }, 'New thread') : (A.seen.newReplies(c, KIND[t.id]) ? h('span', { class: 'pill-new' }, A.plural(A.seen.newReplies(c, KIND[t.id]), 'new reply', 'new replies')) : null)), c.messages, ctx.re, 3),
       }));
       [...seg.children].forEach(b => b.setAttribute('aria-pressed', String(b.dataset.id === t.id)));
     }
@@ -2453,6 +2744,422 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
     if (D.welcome.length) {
       root.appendChild(h('section', { class: 'section' }, h('h2', null, 'House rules from the sheet'),
         h('div', { class: 'notes' }, D.welcome.slice(0, 14).map(t => h('div', { class: 'note' }, A.rich(t))))));
+    }
+    return root;
+  };
+})();
+
+/* ============================================================
+   Screens, part 3: Today, My applications, institution profiles,
+   and the Track button that sits on every job posting.
+   ============================================================ */
+(function () {
+  const A = (globalThis.A = globalThis.A || {});
+  const h = A.h;
+  A.views = A.views || {};
+
+  const DAY = A.DAY;
+  const tracked = e => !!(e && (e.applied || e.status));
+  const localDay = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+  const dayMs = s => (s ? A.parseDate(s) : null);
+  const plural = A.plural;
+  const rerender = () => { if (A.rerender) A.rerender(true); };
+
+  function statTile(label, value, note, onClick) {
+    const el = h('div', { class: 'stat' + (onClick ? ' click' : ''), tabindex: onClick ? '0' : null, role: onClick ? 'link' : null },
+      h('div', { class: 'lbl' }, label), h('div', { class: 'val' }, value), note ? h('div', { class: 'note' }, note) : null);
+    if (onClick) { el.addEventListener('click', onClick); el.addEventListener('keydown', e => { if (e.key === 'Enter') onClick(); }); }
+    return el;
+  }
+  const panel = (title, link, body) => h('section', { class: 'panel' }, h('header', null, h('h3', null, title), link || null), body);
+  const go = (view, params, label) => h('button', { class: 'linkbtn', type: 'button', onClick: () => A.go(view, params) }, label);
+  const empty = text => h('p', { class: 'note-line', style: { padding: '8px 0 12px' } }, text);
+
+  /* ---------- Institution names open a profile ---------- */
+  A.instHref = name => '#/institution?name=' + encodeURIComponent(name);
+  A.instLink = (name, re) => h('a', { class: 'inst-link', href: A.instHref(name), title: 'Everything the sheet says about ' + name }, A.rich(name, re));
+
+  /* ---------- Tracking a posting: applied date, deadline, status, private note ---------- */
+  A.trackEditor = function (entry, opts) {
+    opts = opts || {};
+    const e = Object.assign({}, entry);
+    const isManual = !!opts.manual;
+    const inp = (type, value, extra) => h('input', Object.assign({ class: 'input', type, value: value || '' }, extra || {}));
+    const fInst = isManual ? inp('text', e.institution, { placeholder: 'For example: University of Iowa', required: true }) : null;
+    const fDept = isManual ? inp('text', e.department, { placeholder: 'Department or program' }) : null;
+    const fUrl = isManual ? inp('url', e.url, { placeholder: 'https://… (optional)' }) : null;
+    const fApplied = inp('date', e.applied || (opts.fresh ? localDay() : ''));
+    const fDeadline = inp('date', e.deadline);
+    const fStatus = h('select', { class: 'input' }, h('option', { value: '' }, 'Not applied yet'), A.STATUS.map(s => h('option', { value: s }, s)));
+    fStatus.value = e.status || (opts.fresh ? 'Applied' : '');
+    const fNote = h('textarea', { class: 'input', rows: '3', placeholder: 'Private note: contacts, what to emphasise, reminders. Only you see this.' }, e.note || '');
+    const msg = h('p', { class: 'hint', role: 'status' });
+    const lab = (text, field) => h('label', null, text, field);
+
+    const save = h('button', { class: 'btn primary sm', type: 'button' }, 'Save');
+    const cancel = h('button', { class: 'btn sm', type: 'button' }, 'Cancel');
+    const exists = !!A.mine.get(e.id);
+    const remove = exists ? h('button', { class: 'btn quiet sm', type: 'button' }, 'Remove from my list') : null;
+
+    save.addEventListener('click', () => {
+      if (isManual) {
+        e.institution = fInst.value.trim(); e.department = fDept.value.trim(); e.url = A.safeUrl(fUrl.value.trim()) || '';
+        if (!e.institution) { msg.textContent = 'Add the institution name.'; fInst.focus(); return; }
+        e.field = A.fieldBucket(e.department);
+      }
+      e.applied = fApplied.value; e.deadline = fDeadline.value; e.status = fStatus.value; e.note = fNote.value.trim();
+      if (e.applied && !e.status) e.status = 'Applied';
+      if (!tracked(e) && !e.note && !e.deadline) { if (exists) A.mine.del(e.id); }
+      else A.mine.put(e);
+      if (A.refreshCounts) A.refreshCounts();
+      if (opts.onDone) opts.onDone(true);
+    });
+    cancel.addEventListener('click', () => { if (opts.onDone) opts.onDone(false); });
+    if (remove) remove.addEventListener('click', () => { A.mine.del(e.id); if (A.refreshCounts) A.refreshCounts(); if (opts.onDone) opts.onDone(true); });
+
+    return h('div', { class: 'editor' },
+      isManual ? h('div', { class: 'ed-grid' }, lab('Institution', fInst), lab('Department', fDept), lab('Link to the ad', fUrl)) : null,
+      h('div', { class: 'ed-grid' }, lab('Applied on', fApplied), lab('Deadline', fDeadline), lab('Status', fStatus)),
+      lab('Note', fNote), msg,
+      h('div', { class: 'acts' }, save, cancel, remove));
+  };
+
+  /* One line about your own entry: applied, deadline, status, and your note. */
+  A.mySummary = function (e) {
+    if (!e) return null;
+    const bits = [];
+    const ap = dayMs(e.applied), dl = dayMs(e.deadline);
+    if (e.status && e.status !== 'Applied') bits.push(h('b', null, e.status));
+    if (ap) bits.push('You applied ' + A.fmtDate(ap) + ' (' + plural(A.daysSince(ap), 'day') + ' ago)');
+    if (dl) { const d = Math.round((dl - A.today()) / DAY); bits.push('deadline ' + A.fmtDate(dl) + (d > 0 ? ' (in ' + plural(d, 'day') + ')' : d === 0 ? ' (today)' : ' (passed)')); }
+    const line = bits.length ? h('div', { class: 'mine-line' }, bits.reduce((acc, b, i) => acc.concat(i ? [', ', b] : [b]), [])) : null;
+    return h('div', null, line, e.note ? h('div', { class: 'mine-note' }, A.rich(e.note)) : null);
+  };
+
+  A.trackControls = function (p) {
+    const btn = h('button', { class: 'btn sm', type: 'button' });
+    const area = h('div', { class: 'track-area' });
+    let open = false;
+    function paint() {
+      const e = A.mine.forPosting(p);
+      A.clear(btn);
+      const on = tracked(e);
+      btn.classList.toggle('on', on);
+      btn.appendChild(A.icon(on ? 'check' : 'plus', 13));
+      btn.appendChild(document.createTextNode(on ? (e.status && e.status !== 'Applied' ? e.status : 'Applied') : (e && e.note ? 'My note' : 'Track')));
+      btn.title = on ? 'Edit your application details' : 'Mark as applied, add a deadline or a private note';
+      btn.setAttribute('aria-expanded', String(open));
+      A.clear(area);
+      if (open) area.appendChild(A.trackEditor(e || A.mine.fromPosting(p), { fresh: !e, onDone: () => { open = false; paint(); } }));
+      else if (e) area.appendChild(A.mySummary(e));
+    }
+    btn.addEventListener('click', () => { open = !open; paint(); });
+    paint();
+    return { btn, area };
+  };
+
+  /* ---------- Shared pieces for alerts ---------- */
+  const COLOR = r => (r.tab === 'apps' ? A.RESP_COLOR[r.item.kind] || 'var(--axis)' : r.tab === 'offers' ? 'var(--s3)' : 'var(--axis)');
+  const deptNote = { same: 'Matches your department', other: 'A different department', unknown: '' };
+  function reportRow(r, showMine) {
+    const it = r.item;
+    const dept = [it.department, it.specialty].filter(Boolean).join(', ');
+    const notes = it.noteList || it.notes || [];
+    const extra = r.tab === 'apps' && it.daysToResponse !== null ? 'Heard back ' + plural(it.daysToResponse, 'day') + ' after applying' : '';
+    return h('div', { class: 'mini alert' },
+      h('div', { class: 't' }, A.badge(r.label, COLOR(r)), ' ', A.instLink(it.institution), r.isNew ? h('span', { class: 'pill-new' }, 'New') : null),
+      h('time', null, r.when ? A.fmtDate(r.when, false) : ''),
+      h('div', { class: 's' }, [dept, extra].filter(Boolean).join('. '),
+        showMine && deptNote[r.dept] ? h('span', { class: 'dept-' + r.dept }, (dept || extra ? '. ' : '') + deptNote[r.dept] + (r.entry && r.entry.department ? ' (' + r.entry.department + ')' : '') + '.') : null),
+      notes.length ? h('div', { class: 'q' }, notes.join(' | ').slice(0, 220) + (notes.join(' | ').length > 220 ? '…' : '')) : null);
+  }
+  function showMore(list, n, build) {
+    const box = h('div', null, list.slice(0, n).map(build));
+    if (list.length > n) {
+      const b = h('button', { class: 'linkbtn', type: 'button', style: { margin: '8px 0 10px' } }, 'Show ' + (list.length - n) + ' more');
+      b.addEventListener('click', () => { list.slice(n).forEach(x => box.insertBefore(build(x), b)); b.remove(); });
+      box.appendChild(b);
+    }
+    return box;
+  }
+
+  /* Counts that drive the Today page, the menu and the app icon badge. */
+  A.todayCounts = function (db) {
+    if (!db || !A.seen.ready) return { total: 0, badge: 0 };
+    const k = A.kpis(db, A.UI.prevVisit, A.UI.keywords);
+    const alerts = A.myAlerts(db).filter(a => a.isNew).length;
+    const posts = db.postings.filter(p => k.isNew(p) && k.match(p)).length;
+    return { alerts, posts, badge: alerts + posts, total: alerts + posts };
+  };
+
+  /* ---------------- Today ---------------- */
+  A.views.today = function () {
+    const D = A.db, U = A.UI, S = A.seen;
+    const k = A.kpis(D, U.prevVisit, U.keywords);
+    const today = A.today();
+    const recent = t => t !== null && t !== undefined && t >= today - 7 * DAY && t <= today + 2 * DAY;
+    // Before the first comparison is possible, "new" falls back to the past seven days.
+    const fresh = (it, kind, t) => (S.ready ? S.changed(it, kind) : recent(t));
+    const when = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+
+    const root = h('div', null, A.pageHead('Today, ' + when,
+      S.ready ? 'What changed in the sheet since you last left' + (U.prevVisit ? ' (' + A.stamp(U.prevVisit) + ')' : '') + '.'
+        : 'Your first look. From your next visit, this page lists only what changed in between. For now it shows the past seven days.'));
+    if (S.ready) {
+      const mark = h('button', { class: 'btn sm', type: 'button' }, A.icon('check', 14), 'Mark everything as seen');
+      mark.addEventListener('click', () => { S.markAll(D); A.UI.prevVisit = Date.now(); if (A.refreshCounts) A.refreshCounts(); rerender(); });
+      root.appendChild(h('div', { style: { margin: '-6px 0 20px' } }, mark));
+    }
+
+    // 1. Places you applied
+    const mine = A.mine.tracked();
+    const alerts = A.myAlerts(D);
+    const myNew = S.ready ? alerts.filter(a => a.isNew) : alerts.filter(a => recent(a.when));
+    let p1body;
+    if (!mine.length) p1body = h('div', null, empty('Mark the postings you apply to (the Track button on each posting). Replies that others report from those places will show up here.'), go('postings', U.keywords.length ? { kw: '1' } : null, 'Find postings to track'));
+    else if (!myNew.length) p1body = empty('Nothing new from your ' + plural(mine.length, 'application') + '. ' + (alerts.length ? alerts.length + ' earlier ' + (alerts.length === 1 ? 'report is' : 'reports are') + ' on My applications.' : ''));
+    else p1body = showMore(myNew, 6, r => reportRow(r, true));
+    const g = h('div', { class: 'grid g2' });
+    g.appendChild(panel('At places you applied', mine.length ? h('a', { href: '#/mine' }, 'My applications') : null, p1body));
+
+    // 2. Deadlines and waits
+    const soon = mine.concat(A.mine.all().filter(e => !tracked(e) && e.deadline)).map(e => ({ e, t: dayMs(e.deadline) })).filter(x => x.t && x.t >= today && x.t <= today + 21 * DAY).sort((a, b) => a.t - b.t);
+    const dl = soon.length ? soon.map(({ e, t }) => h('div', { class: 'mini' },
+      h('div', { class: 't' }, A.instLink(e.institution)), h('time', null, A.fmtDate(t, false)),
+      h('div', { class: 's' }, [e.department, t === today ? 'Due today' : 'In ' + plural(Math.round((t - today) / DAY), 'day'), tracked(e) ? 'applied' : 'not applied yet'].filter(Boolean).join(', '))))
+      : empty('No deadlines in the next three weeks. Add one with the Track button on a posting.');
+    g.appendChild(panel('Deadlines in the next three weeks', null, dl));
+
+    // 3. Postings
+    const newPosts = D.postings.filter(p => fresh(p, 'post', p.dateMs)).sort((a, b) => (b.dateMs || 0) - (a.dateMs || 0) || b.row - a.row);
+    const forYou = newPosts.filter(k.match);
+    const others = newPosts.length - forYou.length;
+    const postMini = p => h('div', { class: 'mini' },
+      h('div', { class: 't' }, A.instLink(p.university || 'Untitled posting'), ' ', A.kwGroupsOf(p).map(n => A.chip(n, 'accent'))),
+      h('time', null, A.fmtDate(p.dateMs, false)),
+      h('div', { class: 's' }, [p.department, p.location, p.rank].filter(Boolean).join(', ')),
+      p.url ? h('div', { class: 'q' }, A.link(p.url, 'Open posting', 'ext')) : null);
+    g.appendChild(panel(U.keywords.length ? 'New postings matching your keywords' : 'New postings',
+      newPosts.length ? go('postings', S.ready ? { new: '1' } : { week: '1' }, 'All ' + newPosts.length + ' new') : null,
+      U.keywords.length ? (forYou.length ? showMore(forYou, 6, postMini) : empty('None matched your keywords' + (others ? '. ' + plural(others, 'other posting') + ' arrived.' : '.')))
+        : (newPosts.length ? showMore(newPosts, 6, postMini) : empty('No new postings.'))));
+
+    // 4. Replies reported by everyone
+    const newApps = D.apps.filter(a => fresh(a, 'app', a.addedMs)).sort((a, b) => (b.addedMs || 0) - (a.addedMs || 0) || b.row - a.row);
+    const kinds = A.RESP_ORDER.map(kd => [kd, newApps.filter(a => a.kind === kd).length]).filter(x => x[1]);
+    g.appendChild(panel('Replies reported by others', newApps.length ? go('applications', S.ready ? { new: '1' } : {}, 'See all') : null,
+      newApps.length ? h('div', null,
+        h('div', { class: 'chips', style: { margin: '2px 0 8px' } }, kinds.map(([kd, n]) => h('span', { class: 'badge' }, h('i', { style: { background: A.RESP_COLOR[kd] } }), n + ' ' + kd.toLowerCase()))),
+        showMore(newApps, 5, a => reportRow({ item: a, tab: 'apps', label: a.kind, when: a.respondedMs || a.addedMs, isNew: false }, false)))
+        : empty('No new replies reported.')));
+    root.appendChild(g);
+
+    // 5. Conversations
+    const tNew = D.comments.filter(t => (S.ready ? S.isNew(t, 'com') : recent(t.dateMs)));
+    const tMore = S.ready ? D.comments.filter(t => S.newReplies(t, 'com') > 0) : [];
+    const threads = tNew.concat(tMore).sort((a, b) => b.row - a.row);
+    const tMini = t => {
+      const first = t.messages[0];
+      const nr = S.newReplies(t, 'com');
+      return h('div', { class: 'mini' },
+        h('div', { class: 't', style: { fontWeight: 500 } }, first.length > 180 ? first.slice(0, 179) + '…' : first),
+        h('time', null, t.dateMs ? A.fmtDate(t.dateMs, false) : ''),
+        h('div', { class: 's' }, S.isNew(t, 'com') ? h('span', { class: 'pill-new' }, 'New thread') : (nr ? h('span', { class: 'pill-new' }, plural(nr, 'new reply', 'new replies')) : null), ' ', plural(t.messages.length - 1, 'reply', 'replies')));
+    };
+    root.appendChild(h('div', { class: 'grid g2', style: { marginTop: '16px' } },
+      panel('Conversations', threads.length ? go('community', S.ready ? { new: '1' } : { week: '1' }, 'Read them') : null,
+        threads.length ? showMore(threads, 5, tMini) : empty('Nothing new on the comment board.')),
+      (() => {
+        const rows = [
+          ['No-response reports', 'noresponse', D.noresp.filter(r => fresh(r, 'nores', r.dateMs)).length],
+          ['Institutional culture', 'culture', D.culture.filter(c => fresh(c, 'cult', c.dateMs)).length],
+          ['Locations', 'locations', S.ready ? D.locs.filter(l => S.changed(l, 'loc')).length : 0],
+          ['Negotiations', 'negotiations', D.nego.filter(n => fresh(n, 'nego', n.dateMs)).length],
+          ['Offers and search changes', 'offers', D.offers.filter(o => fresh(o, 'offer', o.dateMs)).length + D.frozen.filter(o => fresh(o, 'froz', o.dateMs)).length + D.failed.filter(o => fresh(o, 'fail', o.dateMs)).length],
+          ['Visa and happy-tab threads', 'community', (S.ready ? D.visa.filter(t => S.changed(t, 'visa')).length + D.happy.filter(t => S.changed(t, 'joy')).length : 0)],
+        ];
+        return panel('Elsewhere in the sheet', null, rows.map(([label, view, n]) => h('div', { class: 'mini' },
+          h('div', { class: 't', style: { fontWeight: 500 } }, n ? h('a', { href: '#/' + view + (S.ready && view !== 'offers' ? '?new=1' : '') }, label) : label),
+          h('time', null, n ? h('b', { class: 'newcount' }, n + ' new') : 'nothing new'))));
+      })()));
+    return root;
+  };
+
+  /* ---------------- My applications ---------------- */
+  A.views.mine = function () {
+    const D = A.db, P = A.prev;
+    const root = h('div', null, A.pageHead('My applications', 'The places you applied, with every reply that others have reported from them, and how your wait compares. Kept in this browser only. Back it up from Settings.'));
+    const all = A.mine.tracked();
+    const addArea = h('div');
+    const addBtn = h('button', { class: 'btn', type: 'button' }, A.icon('plus', 14), 'Add one that is not on the sheet');
+    addBtn.addEventListener('click', () => {
+      A.clear(addArea);
+      addArea.appendChild(A.trackEditor(A.mine.manual({ institution: '', department: '' }), { manual: true, fresh: true, onDone: saved => { A.clear(addArea); if (saved) rerender(); } }));
+    });
+    const csv = h('button', { class: 'btn quiet', type: 'button' }, A.icon('download', 14), 'Export CSV');
+    csv.addEventListener('click', () => A.downloadCsv('my-applications.csv', ['Institution', 'Department', 'Applied', 'Deadline', 'Status', 'Reports from this institution', 'Note', 'Link'],
+      all.map(e => [e.institution, e.department, e.applied, e.deadline, e.status, A.reportsAt(D, e.institution).length, e.note, e.url])));
+    root.appendChild(h('div', { class: 'toolbar' }, addBtn, all.length ? csv : null));
+    root.appendChild(addArea);
+
+    if (!all.length) {
+      root.appendChild(A.emptyState('No applications tracked yet', 'On Job postings, press Track on a posting you applied to. Replies others report from that place then appear here and on Today.'));
+      root.appendChild(h('div', { style: { textAlign: 'center' } }, h('button', { class: 'btn primary', type: 'button', onClick: () => A.go('postings', A.UI.keywords.length ? { kw: '1' } : null) }, 'Go to job postings')));
+      return root;
+    }
+
+    const alerts = A.myAlerts(D);
+    const interviews = alerts.filter(a => a.tab === 'apps' && /interview/i.test(a.item.kind));
+    const today = A.today();
+    const deadlines = all.filter(e => { const t = dayMs(e.deadline); return t && t >= today && t <= today + 14 * DAY; });
+    const info = e => {
+      const ap = dayMs(e.applied);
+      const rep = alerts.filter(a => a.entry === e && a.tab === 'apps');
+      const tm = A.fieldTiming(D, e.field) || A.fieldTiming(D, null);
+      const wait = ap ? A.daysSince(ap) : null;
+      return { ap, rep, tm, wait, long: !rep.length && wait !== null && tm && wait > tm.p75 };
+    };
+    const infos = new Map(all.map(e => [e, info(e)]));
+    const longWaits = all.filter(e => infos.get(e).long);
+    root.appendChild(h('div', { class: 'stats', style: { marginTop: '14px' } },
+      statTile('Applications tracked', A.n(all.length), plural(all.filter(e => A.reportsAt(D, e.institution).length).length, 'place') + ' with reports in the sheet'),
+      statTile('Interviews reported at your places', A.n(interviews.length), 'by anyone, any department'),
+      statTile('Deadlines in the next 14 days', A.n(deadlines.length), deadlines.length ? 'Next: ' + deadlines.map(e => e.institution).slice(0, 2).join(', ') : 'none coming up'),
+      statTile('Waiting longer than most', A.n(longWaits.length), 'No reply here, and longer than 3 in 4 reported waits in that field')));
+    const pace = A.seasonPace(P);
+    if (pace) root.appendChild(h('p', { class: 'note-line', style: { marginTop: '12px' } }, 'Season pace: by ' + A.fmtDate(pace.asOf) + ' last season, ' + A.pct(pace.share) + ' of that season’s ' + pace.n + ' reported interview invitations had come in.'));
+
+    const sec1 = h('section', { class: 'section' }, h('h2', null, 'Reported at places you applied'),
+      h('p', { class: 'lede' }, 'Replies, silences and search changes that others posted for the same institutions. Departments are compared by their wording, so check the details before reading too much into one.'));
+    sec1.appendChild(alerts.length ? h('div', { class: 'panel' }, showMore(alerts, 12, r => reportRow(r, true))) : empty('Nothing reported from your places yet this season.'));
+    root.appendChild(sec1);
+
+    const sec2 = h('section', { class: 'section' }, h('h2', null, 'Your list'));
+    const sortSel = h('select', { class: 'input', 'aria-label': 'Sort' }, [['applied', 'Applied, newest first'], ['deadline', 'Deadline, soonest first'], ['wait', 'Longest wait first'], ['az', 'Institution A to Z']].map(([v, l]) => h('option', { value: v }, l)));
+    sortSel.value = (A.UI.state.mineSort || 'applied');
+    const list = h('div', { class: 'list' });
+    function draw() {
+      A.UI.state.mineSort = sortSel.value;
+      const cmp = {
+        applied: (a, b) => (b.applied || '').localeCompare(a.applied || ''),
+        deadline: (a, b) => (a.deadline || '9999').localeCompare(b.deadline || '9999'),
+        wait: (a, b) => (infos.get(b).wait || -1) - (infos.get(a).wait || -1),
+        az: (a, b) => a.institution.localeCompare(b.institution),
+      }[sortSel.value];
+      A.clear(list);
+      all.slice().sort(cmp).forEach(e => list.appendChild(card(e)));
+    }
+    sortSel.addEventListener('change', draw);
+    sec2.appendChild(h('div', { class: 'toolbar' }, sortSel));
+    sec2.appendChild(list);
+    root.appendChild(sec2);
+
+    function card(e) {
+      const I = infos.get(e);
+      const lines = [];
+      if (I.rep.length) lines.push(h('div', null, h('b', null, 'This season here: '), I.rep.slice(0, 4).map(r => r.item.kind.toLowerCase() + ' ' + A.fmtDate(r.when, false) + (r.dept === 'same' ? ' (your department)' : r.dept === 'other' ? ' (other department)' : '')).join('; ') + (I.rep.length > 4 ? '; and ' + (I.rep.length - 4) + ' more' : '') + '.'));
+      else lines.push(h('div', null, h('b', null, 'This season here: '), 'no replies reported yet.'));
+      if (I.tm) {
+        const where = I.tm.field ? 'In ' + I.tm.field.toLowerCase() : 'Across all fields';
+        let t = where + ', half of the reported replies came within ' + plural(Math.round(I.tm.median), 'day') + ' of applying, three in four within ' + plural(Math.round(I.tm.p75), 'day') + ' (' + I.tm.n + ' reports).';
+        if (!I.rep.length && I.wait !== null) t += I.wait > I.tm.p75 ? ' Your wait of ' + plural(I.wait, 'day') + ' is longer than most, which often means a slow committee rather than a decision.' : (I.wait > I.tm.median ? ' Your wait of ' + plural(I.wait, 'day') + ' is longer than half of them.' : ' Your wait of ' + plural(I.wait, 'day') + ' is still within the usual range.');
+        lines.push(h('div', null, h('b', null, 'Timing: '), t));
+      }
+      if (P) {
+        const firsts = A.seasonFirsts(P, e.institution);
+        lines.push(h('div', null, h('b', null, 'Last season here: '), firsts.length ? firsts.map(f => 'first ' + f.kind.toLowerCase() + ' ' + A.fmtDate(f.t)).join('; ') + '.' : 'nothing reported.'));
+      }
+      const area = h('div', { class: 'track-area' }, A.mySummary(e));
+      const edit = h('button', { class: 'btn sm', type: 'button' }, 'Edit');
+      edit.addEventListener('click', () => { A.clear(area); area.appendChild(A.trackEditor(e, { onDone: saved => { if (saved) rerender(); else { A.clear(area); area.appendChild(A.mySummary(e)); } } })); });
+      const hasNew = I.rep.some(r => r.isNew) || alerts.some(a => a.entry === e && a.isNew);
+      return h('article', { class: 'row nostar' },
+        h('div', { class: 'row-main' },
+          h('h4', { class: 'row-title' }, A.instLink(e.institution), hasNew ? h('span', { class: 'pill-new' }, 'New report') : null),
+          e.department ? h('p', { class: 'row-sub' }, e.department) : null,
+          h('div', { class: 'chips' }, e.location ? A.chip(e.location) : null, e.field ? A.chip(e.field) : null, e.post ? null : A.chip('Added by you')),
+          area, h('div', { class: 'timing' }, lines)),
+        h('div', { class: 'row-side' }, edit, e.url ? A.extButton(e.url, 'Job ad') : null));
+    }
+    draw();
+    return root;
+  };
+
+  /* ---------------- Institution profile ---------------- */
+  A.views.institution = function (params) {
+    const D = A.db, P = A.prev, name = (params.name || '').trim();
+    if (!name) return A.emptyState('No institution chosen', 'Click an institution name anywhere in the app to open its profile.');
+    const same = n => A.sameInst(name, n);
+    const posts = D.postings.filter(p => same(p.university)).sort((a, b) => (b.dateMs || 0) - (a.dateMs || 0));
+    const reps = A.reportsAt(D, name);
+    const apps = reps.filter(r => r.tab === 'apps');
+    const nores = reps.filter(r => r.tab === 'noresp');
+    const changes = reps.filter(r => r.tab !== 'apps' && r.tab !== 'noresp');
+    const cult = D.culture.filter(c => c.institution && same(c.institution));
+    const raw = [name].concat(posts.map(p => p.university), apps.map(r => r.item.institution));
+    const display = (() => { const c = A.count(raw.filter(Boolean), x => x); return [...c.entries()].sort((a, b) => b[1] - a[1] || b[0].length - a[0].length)[0][0]; })();
+    const cities = [...new Set(posts.map(p => A.norm(String(p.location || '').split(',')[0])).filter(c => c.length > 2))];
+    const locs = D.locs.filter(l => cities.some(c => A.norm(l.city).indexOf(c) >= 0));
+    const names = [...new Set(raw.map(x => A.norm(x)).filter(x => x.length >= 4 && !/^(the )?university$/.test(x)))];
+    const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const mentionRe = names.length ? new RegExp('(^|[^a-z0-9])(' + names.map(esc).join('|') + ')([^a-z0-9]|$)') : null;
+    const mentions = mentionRe ? D.comments.filter(t => mentionRe.test(t.text)).sort((a, b) => b.row - a.row) : [];
+    const firstsNow = A.seasonFirsts(D, name);
+    const firstsPrev = P ? A.seasonFirsts(P, name) : [];
+    const prevReps = P ? A.reportsAt(P, name).filter(r => r.tab === 'apps') : [];
+
+    const root = h('div', null, A.pageHead(display, 'Everything the sheet says about this institution. Spellings are matched loosely, so “UCSF” and “University of California, San Francisco” count as the same place.'));
+    const mine = A.mine.all().filter(e => same(e.institution));
+    if (mine.length) root.appendChild(h('div', { class: 'banner info' }, h('div', null, h('b', null, 'Your list: '), mine.map(e => (e.department || 'a position') + (e.applied ? ', applied ' + A.fmtDate(dayMs(e.applied)) : '') + (e.status && e.status !== 'Applied' ? ' (' + e.status.toLowerCase() + ')' : '')).join('; ') + '. ', h('a', { href: '#/mine' }, 'My applications'))));
+
+    const kindsLine = A.RESP_ORDER.map(k => [k, apps.filter(r => r.item.kind === k).length]).filter(x => x[1]).map(([k, n]) => n + ' ' + k.toLowerCase()).join(', ');
+    root.appendChild(h('div', { class: 'stats' },
+      statTile('Postings this season', A.n(posts.length), posts[0] ? 'Latest added ' + A.fmtDate(posts[0].dateMs) : null),
+      statTile('Replies reported', A.n(apps.length), kindsLine || 'none yet'),
+      statTile('No-response reports', A.n(nores.length), nores.length ? 'people still waiting' : null),
+      P ? statTile('Replies last season', A.n(prevReps.length), firstsPrev.length ? 'First: ' + firstsPrev[0].kind.toLowerCase() + ', ' + A.fmtDate(firstsPrev[0].t) : 'none reported')
+        : statTile('Culture questions', A.n(cult.length), 'Add last season’s sheet in Settings to compare timing')));
+
+    const sec = (title, lede, body) => h('section', { class: 'section' }, h('h2', null, title), lede ? h('p', { class: 'lede' }, lede) : null, body);
+    if (firstsNow.length || firstsPrev.length) {
+      const rowsT = A.RESP_ORDER.filter(k => firstsNow.some(f => f.kind === k) || firstsPrev.some(f => f.kind === k)).map(k => {
+        const a = firstsNow.find(f => f.kind === k), b = firstsPrev.find(f => f.kind === k);
+        return h('div', null, h('dt', null, k), h('dd', null, a ? A.fmtDate(a.t) : 'not yet', P ? h('small', null, '  last season: ' + (b ? A.fmtDate(b.t) : 'none')) : null));
+      });
+      root.appendChild(sec('When replies came', 'The first report of each kind of reply' + (P ? ', this season and last.' : '. Add last season’s sheet in Settings to compare with a year ago.'), h('dl', { class: 'kv' }, rowsT)));
+    }
+    if (posts.length) root.appendChild(sec('Job postings', null, h('div', { class: 'panel' }, posts.map(p => h('div', { class: 'mini' },
+      h('div', { class: 't' }, p.department || p.discipline || 'Posting', ' ', A.kwGroupsOf(p).map(n => A.chip(n, 'accent'))),
+      h('time', null, A.fmtDate(p.dateMs, false)),
+      h('div', { class: 's' }, [p.rank, p.location, p.category].filter(Boolean).join(', ')),
+      h('div', { class: 'q' }, p.url ? A.link(p.url, 'Open posting', 'ext') : null, p.notes.length ? ' ' + p.notes.slice(0, 2).join(' | ') : ''))))));
+    if (apps.length) root.appendChild(sec('Replies this season', null, h('div', { class: 'panel' }, showMore(apps, 10, r => reportRow(r, false)))));
+    if (nores.length || changes.length) root.appendChild(sec('Still waiting, and search changes', null, h('div', { class: 'panel' }, nores.concat(changes).map(r => reportRow(r, false)))));
+    if (prevReps.length) root.appendChild(sec('Last season', 'Replies reported from here in last season’s sheet.', h('div', { class: 'panel' }, showMore(prevReps, 6, r => reportRow(Object.assign({}, r, { isNew: false }), false)))));
+    if (cult.length) root.appendChild(sec('Institutional culture', null, h('div', { class: 'list' }, cult.map(c => A.thread(h('div', { class: 'thread-head' }, c.department ? h('b', null, c.department) : null, c.dateMs ? h('span', null, A.fmtDate(c.dateMs)) : null), [c.question || '(no question text)'].concat(c.notes), null, 3)))));
+    if (locs.length) root.appendChild(sec('Living there', null, h('div', { class: 'list' }, locs.map(l => A.thread(h('div', { class: 'thread-head' }, h('b', null, l.city)), [l.question || 'Notes'].concat(l.pros ? ['In favour: ' + l.pros] : [], l.cons ? ['Against: ' + l.cons] : [], l.notes), null, 3)))));
+    if (mentions.length) root.appendChild(sec('Mentioned in conversations', plural(mentions.length, 'thread') + ' on the comment board mention this name.', h('div', { class: 'list' }, showMore(mentions, 5, t => A.thread(h('div', { class: 'thread-head' }, t.dateMs ? h('span', null, A.fmtDate(t.dateMs)) : null), t.messages, null, 2)))));
+    if (!posts.length && !reps.length && !cult.length && !mentions.length && !prevReps.length) root.appendChild(A.emptyState('Nothing found for “' + name + '”', 'Try the search box with part of the name.'));
+    return root;
+  };
+
+  /* Search: list matching institution profiles above the results. */
+  const baseSearch = A.views.search;
+  A.views.search = function (params) {
+    const root = baseSearch(params);
+    const terms = A.norm(params.q || '').split(/\s+/).filter(Boolean);
+    if (!terms.length || !A.db) return root;
+    const seen = new Map();
+    A.db.postings.map(p => p.university).concat(A.db.apps.map(a => a.institution)).forEach(n => {
+      if (!n || !terms.every(t => A.norm(n).indexOf(t) >= 0)) return;
+      const k = A.instKey(n).core || A.norm(n);
+      if (!seen.has(k)) seen.set(k, n);
+    });
+    if (seen.size) {
+      const box = h('div', { class: 'chips', style: { margin: '-4px 0 16px' } }, h('span', { class: 'note-line', style: { marginRight: '4px' } }, 'Institution profiles:'),
+        [...seen.values()].slice(0, 10).map(n => h('a', { class: 'chip link', href: A.instHref(n) }, n)));
+      const head = root.querySelector('.pagehead');
+      if (head && head.nextSibling) root.insertBefore(box, head.nextSibling); else root.appendChild(box);
     }
     return root;
   };
@@ -2543,12 +3250,12 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
 
   /* ---------------- Navigation ---------------- */
   const NAV = [
-    { group: '', items: [['overview', 'Overview'], ['statistics', 'Statistics']] },
+    { group: '', items: [['today', 'Today', d => A.todayCounts(d).total || ''], ['mine', 'My applications', () => A.mine.tracked().length || ''], ['overview', 'Overview'], ['statistics', 'Statistics']] },
     { group: 'Browse', items: [['postings', 'Job postings', d => d.postings.length], ['applications', 'Applications', d => d.apps.length], ['noresponse', 'No response', d => d.noresp.length], ['offers', 'Offers and changes', d => d.offers.length + d.frozen.length + d.failed.length], ['negotiations', 'Negotiations', d => d.nego.length]] },
     { group: 'Community', items: [['community', 'Conversations', d => d.comments.length + d.visa.length + d.happy.length], ['culture', 'Institutional culture', d => d.culture.length], ['locations', 'Locations', d => d.locs.length]] },
     { group: '', items: [['resources', 'Resources']] },
   ];
-  const TITLES = { overview: 'Overview', statistics: 'Statistics', postings: 'Job postings', applications: 'Applications', noresponse: 'No response', offers: 'Offers and changes', negotiations: 'Negotiations', community: 'Conversations', culture: 'Institutional culture', locations: 'Locations', resources: 'Resources', search: 'Search' };
+  const TITLES = { today: 'Today', mine: 'My applications', institution: 'Institution', overview: 'Overview', statistics: 'Statistics', postings: 'Job postings', applications: 'Applications', noresponse: 'No response', offers: 'Offers and changes', negotiations: 'Negotiations', community: 'Conversations', culture: 'Institutional culture', locations: 'Locations', resources: 'Resources', search: 'Search' };
 
   function buildRail() {
     const rail = h('aside', { class: 'rail', id: 'rail', 'aria-label': 'Sections' });
@@ -2571,8 +3278,11 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
   }
   function updateCounts() {
     if (!A.db) return;
-    Object.values(el.navLinks).forEach(n => { n.ct.textContent = n.count ? A.n(n.count(A.db)) : ''; });
+    Object.values(el.navLinks).forEach(n => { const v = n.count ? n.count(A.db) : ''; n.ct.textContent = v === '' ? '' : A.n(v); });
+    el.navLinks.today.ct.classList.toggle('hot', !!el.navLinks.today.ct.textContent);
+    A.updateBadge(A.todayCounts(A.db).badge);
   }
+  A.refreshCounts = updateCounts;
   function updateStatus() {
     A.clear(el.status);
     const st = A.status;
@@ -2596,11 +3306,11 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
     const [path, qs] = raw.split('?');
     const params = {};
     if (qs) qs.split('&').forEach(p => { const [k, v] = p.split('='); if (k) params[decodeURIComponent(k)] = decodeURIComponent((v || '').replace(/\+/g, ' ')); });
-    return { name: path || 'overview', params };
+    return { name: path || 'today', params };
   }
   function render() {
     const { name, params } = parseRoute();
-    const view = A.views[name] ? name : 'overview';
+    const view = A.views[name] ? name : 'today';
     Object.keys(el.navLinks).forEach(id => { if (id === view) el.navLinks[id].a.setAttribute('aria-current', 'page'); else el.navLinks[id].a.removeAttribute('aria-current'); });
     document.title = (TITLES[view] || 'Atlas') + ' | Faculty Market Atlas';
     if (view === 'search') el.search.value = params.q || ''; else if (document.activeElement !== el.search) el.search.value = '';
@@ -2614,6 +3324,8 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
     closeRail();
     window.scrollTo(0, 0);
   }
+  // Redraw the current screen in place (after saving an application, loading last season, and so on).
+  A.rerender = function (keepScroll) { const y = window.scrollY; render(); if (keepScroll) window.scrollTo(0, y); };
   function staleBanner() {
     if (!FILE_MODE || !A.status.at || A.status.dismissed) return null;
     const hrs = A.store.get('refreshHours', 24);
@@ -2662,6 +3374,7 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
   /* ---------------- Data ---------------- */
   A.setData = function (db, meta) {
     A.db = db;
+    A.seen.init(cacheKey());
     Object.assign(A.status, meta);
     updateCounts(); updateStatus();
     const y = window.scrollY;
@@ -2709,6 +3422,58 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
     return !A.status.at || (Date.now() - A.status.at) > hrs * 3600e3 - 60e3;
   }
 
+  /* ---------------- Last season's sheet (optional) ----------------
+     Used only for comparisons: when replies came a year ago, at the same places. It changes little,
+     so it is fetched again at most once a week. */
+  A.prev = null;
+  A.prevInfo = { at: null, error: null, busy: false };
+  const prevId = () => A.store.get('prevSheetId', '') || '';
+  async function loadPrev(force) {
+    const pid = prevId();
+    if (!pid) { A.prev = null; A.prevInfo = { at: null, error: null, busy: false }; return; }
+    const key = 'wb:prev:' + pid;
+    const cached = await A.idb.get(key);
+    if (cached && cached.sheets) { try { A.prev = A.buildDB(cached); A.prevInfo.at = cached.savedAt; } catch (e) { console.warn('Saved copy of last season unreadable', e); } }
+    const stale = !cached || Date.now() - cached.savedAt > 7 * 864e5;
+    if (pid !== 'file' && !FILE_MODE && (stale || force)) {
+      A.prevInfo.busy = true;
+      try {
+        const res = await fetch('https://docs.google.com/spreadsheets/d/' + pid + '/export?format=xlsx', { cache: 'no-store' });
+        if (!res.ok) throw new Error('Google Sheets answered with status ' + res.status + '. Check that the link is shared with anyone who has it.');
+        if (/text\/html/i.test(res.headers.get('content-type') || '')) throw new Error('Google returned a web page instead of the workbook.');
+        const wb = await A.parseXlsx(await res.arrayBuffer());
+        const db = A.buildDB(wb);
+        if (!db.apps.length) throw new Error('That sheet has no replies in an Application info tab.');
+        A.prev = db; A.prevInfo.at = Date.now(); A.prevInfo.error = null;
+        A.idb.set(key, { savedAt: A.prevInfo.at, sheets: wb.sheets });
+      } catch (e) { A.prevInfo.error = describe(e); }
+      A.prevInfo.busy = false;
+    }
+    if (A.db && ['mine', 'institution'].includes(parseRoute().name) && !document.querySelector('.editor')) A.rerender(true);
+  }
+  async function loadPrevFile(f, msg) {
+    try {
+      const wb = await A.parseXlsx(await f.arrayBuffer());
+      const db = A.buildDB(wb);
+      if (!db.apps.length) throw new Error('That file has no replies in an Application info tab.');
+      A.store.set('prevSheetId', 'file');
+      A.prev = db; A.prevInfo = { at: Date.now(), error: null, busy: false };
+      await A.idb.set('wb:prev:file', { savedAt: A.prevInfo.at, sheets: wb.sheets });
+      msg.textContent = 'Loaded: ' + A.n(db.apps.length) + ' replies from last season.';
+    } catch (e) { msg.textContent = 'That file could not be read. ' + describe(e); }
+  }
+  // Earlier seasons' sheets listed on the Resources tab of the current sheet.
+  function prevSuggestions() {
+    const out = [];
+    ((A.db && A.db.glossary) || []).forEach(col => col.items.forEach(it => {
+      const url = it.url || ((it.text || '').match(/https?:\/\/\S+/) || [])[0];
+      const m = (it.text || '').match(/future pi slack[^\n]*?(20\d\d)\s*[-\u2013]\s*(20\d\d)/i);
+      const id = url ? parseSheetId(url) : '';
+      if (m && id && id !== sheetId() && !out.some(x => x.id === id)) out.push({ id, label: m[1] + '\u2013' + m[2].slice(2), y: +m[2] });
+    }));
+    return out.sort((a, b) => b.y - a.y).slice(0, 3);
+  }
+
   /* ---------------- Settings drawer ---------------- */
   function openDrawer() { buildDrawer(); el.drawer.classList.add('open'); el.scrim.classList.add('on'); }
   function closeDrawer() { el.drawer.classList.remove('open'); if (!el.rail.classList.contains('open')) el.scrim.classList.remove('on'); }
@@ -2716,7 +3481,26 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
     A.clear(el.drawer);
     const idInput = h('input', { class: 'input', type: 'text', value: sheetId() ? 'https://docs.google.com/spreadsheets/d/' + sheetId() + '/edit' : '', placeholder: 'Paste the link of your Google Sheet', spellcheck: 'false', 'aria-label': 'Spreadsheet link' });
     const idMsg = h('p', { class: 'hint', role: 'status' }, 'The sheet must be shared so anyone with the link can view it.');
-    const kwInput = h('textarea', { class: 'input', rows: '3', spellcheck: 'false', 'aria-label': 'Keywords' }, A.UI.keywords.join(', '));
+    const kwInput = h('textarea', { class: 'input', rows: '4', spellcheck: 'false', 'aria-label': 'Keywords' }, A.keywordText(A.UI.kwGroups));
+    const exInput = h('textarea', { class: 'input', rows: '2', spellcheck: 'false', 'aria-label': 'Words to exclude' }, (A.UI.exclude || []).join(', '));
+    const prevInput = h('input', { class: 'input', type: 'text', value: prevId() && prevId() !== 'file' ? 'https://docs.google.com/spreadsheets/d/' + prevId() + '/edit' : '', placeholder: 'Optional: link to last season\u2019s sheet', spellcheck: 'false', 'aria-label': 'Last season\u2019s sheet' });
+    const prevMsg = h('p', { class: 'hint', role: 'status' }, A.prevInfo.busy ? 'Loading last season\u2026' : A.prev ? 'Loaded: ' + A.n(A.prev.apps.length) + ' replies' + (A.prevInfo.at ? ', saved ' + A.stamp(A.prevInfo.at) : '') + '.' : (A.prevInfo.error ? 'Could not load it. ' + A.prevInfo.error : ''));
+    const sugg = prevSuggestions();
+    const prevPick = h('input', { type: 'file', accept: '.xlsx', class: 'sr', id: 'prevPick' });
+    prevPick.addEventListener('change', () => { if (prevPick.files[0]) loadPrevFile(prevPick.files[0], prevMsg); prevPick.value = ''; });
+    const backupPick = h('input', { type: 'file', accept: '.json,application/json', class: 'sr', id: 'backupPick' });
+    const backupMsg = h('div', { class: 'hint', role: 'status' });
+    backupPick.addEventListener('change', async () => {
+      const f = backupPick.files[0]; backupPick.value = ''; if (!f) return;
+      A.clear(backupMsg);
+      try {
+        const b = A.backup.parse(await f.text());
+        const yes = h('button', { class: 'btn sm primary', type: 'button' }, 'Replace what is in this browser');
+        yes.addEventListener('click', () => { A.backup.restore(b.data); location.reload(); });
+        backupMsg.appendChild(h('div', null, 'Backup from ' + (b.exported ? A.stamp(Date.parse(b.exported)) : 'an unknown date') + ': ' + A.plural(b.apps, 'application') + ', ' + A.plural(b.notes, 'note') + ', ' + A.plural(b.saved, 'saved posting') + ', and your settings. Restoring replaces those in this browser.'));
+        backupMsg.appendChild(h('div', { class: 'acts', style: { marginTop: '6px', display: 'flex', gap: '6px' } }, yes, h('button', { class: 'btn sm', type: 'button', onClick: () => A.clear(backupMsg) }, 'Cancel')));
+      } catch (e) { backupMsg.textContent = e.message; }
+    });
     const hoursSel = h('select', { class: 'input', 'aria-label': 'Refresh interval' }, [[6, 'Every 6 hours'], [12, 'Every 12 hours'], [24, 'Once a day'], [48, 'Every 2 days']].map(([v, l]) => h('option', { value: String(v) }, l)));
     hoursSel.value = String(A.store.get('refreshHours', 24));
     const theme = A.store.get('theme', 'auto');
@@ -2732,27 +3516,54 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
       if (raw && !id) { idMsg.textContent = 'That does not look like a Google Sheets link. Paste the full address from your browser.'; idInput.focus(); return; }
       const changed = id !== sheetId();
       if (id && id === DEFAULT_ID) A.store.del('sheetId'); else if (id) A.store.set('sheetId', id);
-      A.UI.keywords = kwInput.value.split(/[,\n]/).map(x => x.trim()).filter(Boolean);
-      A.store.set('keywords', A.UI.keywords);
+      const rawPrev = prevInput.value.trim();
+      const pid = rawPrev ? parseSheetId(rawPrev) : (prevId() === 'file' ? 'file' : '');
+      if (rawPrev && !pid) { prevMsg.textContent = 'That does not look like a Google Sheets link.'; prevInput.focus(); return; }
+      if (pid && pid === (id || sheetId())) { prevMsg.textContent = 'That is the current sheet. Paste last season\u2019s link instead.'; prevInput.focus(); return; }
+      const prevChanged = pid !== prevId();
+      if (pid) A.store.set('prevSheetId', pid); else A.store.del('prevSheetId');
+      A.UI.kwGroups = A.parseKeywords(kwInput.value);
+      A.UI.keywords = A.UI.kwGroups.flatMap(g => g.words);
+      A.UI.exclude = exInput.value.split(/[,\n;]/).map(x => x.trim()).filter(x => x.length > 1);
+      A.store.set('kwGroups', A.UI.kwGroups); A.store.set('exclude', A.UI.exclude); A.store.del('keywords');
+      if (prevChanged) { A.prev = null; A.prevInfo = { at: null, error: null, busy: false }; loadPrev(true); }
+      updateCounts();
       A.store.set('refreshHours', +hoursSel.value);
       closeDrawer();
       if (changed) { A.status.at = null; A.db = null; A.status.source = 'none'; loadInitial(); } else { updateStatus(); render(); }
     });
+    // Deleting everything needs a second click, because it also removes your applications and notes.
     const clear = h('button', { class: 'btn', type: 'button' }, 'Clear saved data');
+    let armed = null;
     clear.addEventListener('click', async () => {
-      await A.idb.del(cacheKey());
-      ['saved', 'lastVisit', 'keywords', 'sheetId', 'refreshHours', 'theme'].forEach(k => A.store.del(k));
+      if (!armed) {
+        clear.textContent = 'Click again to delete everything'; clear.classList.add('danger');
+        armed = setTimeout(() => { armed = null; clear.textContent = 'Clear saved data'; clear.classList.remove('danger'); }, 5000);
+        return;
+      }
+      await A.idb.del(cacheKey()); if (prevId()) await A.idb.del('wb:prev:' + prevId());
+      try { Object.keys(localStorage).filter(k => k.indexOf('fma.') === 0).forEach(k => localStorage.removeItem(k)); } catch (e) { /* storage blocked */ }
       location.reload();
     });
     el.drawer.appendChild(h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } }, h('h2', null, 'Settings'), h('button', { class: 'btn quiet icon', type: 'button', 'aria-label': 'Close settings', onClick: closeDrawer }, A.icon('x', 18))));
     el.drawer.appendChild(h('div', { class: 'field' }, h('label', null, 'Spreadsheet'), idInput, idMsg, h('p', { class: 'hint' }, 'Next season, paste the new sheet’s link here and the app will follow it.')));
+    el.drawer.appendChild(h('div', { class: 'field' }, h('label', null, 'Last season\u2019s sheet'), prevInput,
+      sugg.length ? h('div', { class: 'chips' }, h('span', { class: 'hint' }, 'From the Resources tab:'), sugg.map(x => h('button', { class: 'chipbtn', type: 'button', onClick: () => { prevInput.value = 'https://docs.google.com/spreadsheets/d/' + x.id + '/edit'; prevMsg.textContent = 'Press Save settings to load the ' + x.label + ' sheet.'; } }, x.label))) : null,
+      FILE_MODE || prevId() === 'file' ? h('div', null, h('label', { class: 'btn sm', for: 'prevPick', tabindex: '0' }, A.icon('file', 14), 'Choose last season\u2019s .xlsx'), prevPick) : null,
+      prevMsg, h('p', { class: 'hint' }, 'Optional. Lets My applications and institution pages compare this season with the last: when the first interviews came, and how this year\u2019s pace compares.')));
     el.drawer.appendChild(h('div', { class: 'field' }, h('label', null, 'Refresh'), hoursSel, h('p', { class: 'hint' }, 'The app checks while it is open and again whenever you come back to the tab. The Refresh button always fetches right away.')));
-    el.drawer.appendChild(h('div', { class: 'field' }, h('label', null, 'My keywords'), kwInput, h('p', { class: 'hint' }, 'Separate with commas. Postings whose text contains any of these get a highlight and appear under the keyword filter. Parts of words work: “microbiolog” finds microbiology and microbiologist.')));
+    el.drawer.appendChild(h('div', { class: 'field' }, h('label', null, 'My keywords'), kwInput, h('p', { class: 'hint' }, 'Separate words with commas. For several groups, put one per line with a name and a colon, for example \u201cMicrobiology: microbiolog, bacteri, pathogen\u201d. Parts of words work: \u201cmicrobiolog\u201d finds microbiology and microbiologist.')));
+    el.drawer.appendChild(h('div', { class: 'field' }, h('label', null, 'Words to exclude'), exInput, h('p', { class: 'hint' }, 'A posting that contains any of these no longer counts as a keyword match, for example \u201cchemistry, teaching-only\u201d. On Job postings you can also hide them.')));
     el.drawer.appendChild(h('div', { class: 'field' }, h('span', { class: 'lab' }, 'Appearance'), themeBtns));
     const inst = installField(); if (inst) el.drawer.appendChild(inst);
+    el.drawer.appendChild(h('div', { class: 'field' }, h('span', { class: 'lab' }, 'Back up and restore'),
+      h('div', { class: 'steps' }, h('button', { class: 'btn', type: 'button', onClick: () => A.backup.download() }, A.icon('download', 15), 'Download a backup'),
+        h('label', { class: 'btn', for: 'backupPick', tabindex: '0' }, A.icon('upload', 15), 'Restore from a backup'), backupPick),
+      backupMsg,
+      h('p', { class: 'hint' }, 'Your applications, notes, saved postings, keywords and settings live in this browser only. A backup is a small file: keep it safe, and restore it here or on another computer. The sheet data itself is not included.')));
     el.drawer.appendChild(h('div', { class: 'field' }, h('span', { class: 'lab' }, FILE_MODE ? 'Update the data' : 'Or load a downloaded workbook'), updateSteps(closeDrawer)));
     el.drawer.appendChild(h('div', { class: 'field', style: { display: 'flex', gap: '8px', flexDirection: 'row', marginTop: '26px' } }, save, clear));
-    el.drawer.appendChild(h('p', { class: 'hint', style: { marginTop: '26px' } }, 'Privacy: this page talks only to docs.google.com, to read the sheet. Saved postings, keywords and the cached workbook stay in this browser.'));
+    el.drawer.appendChild(h('p', { class: 'hint', style: { marginTop: '26px' } }, 'Privacy: this page talks only to docs.google.com, to read the sheets. Your applications, notes, saved postings, keywords and the cached workbooks stay in this browser.'));
   }
 
   /* ---------------- Boot ---------------- */
@@ -2771,10 +3582,14 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
     }
     if (!A.db) render();
     if (due()) A.refresh({ manual: false });
+    loadPrev(false);
   }
 
   A.boot = function () {
-    A.UI.keywords = A.store.get('keywords', DEFAULT_KEYWORDS);
+    A.UI.kwGroups = A.store.get('kwGroups', null) || [{ name: 'My keywords', words: A.store.get('keywords', DEFAULT_KEYWORDS) }];
+    A.UI.keywords = A.UI.kwGroups.flatMap(g => g.words);
+    A.UI.exclude = A.store.get('exclude', []);
+    A.mine.load();
     A.UI.saved = new Set(A.store.get('saved', []));
     A.UI.prevVisit = A.store.get('lastVisit', null);
     const root = document.getElementById('app');
@@ -2802,7 +3617,7 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
     window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); A.installPrompt = e; syncInstallBtn(); });
     window.addEventListener('appinstalled', () => { A.installPrompt = null; syncInstallBtn(); });
     el.themeBtn.addEventListener('click', () => { A.store.set('theme', isDark() ? 'light' : 'dark'); applyTheme(); render(); });
-    el.search.addEventListener('input', A.debounce(() => { const q = el.search.value.trim(); if (q) A.go('search', { q }); else if (parseRoute().name === 'search') A.go('overview'); }, 260));
+    el.search.addEventListener('input', A.debounce(() => { const q = el.search.value.trim(); if (q) A.go('search', { q }); else if (parseRoute().name === 'search') A.go('today'); }, 260));
     el.search.addEventListener('keydown', e => { if (e.key === 'Escape') { el.search.value = ''; el.search.blur(); } });
     document.addEventListener('keydown', e => {
       if (e.key === '/' && !/input|textarea|select/i.test((document.activeElement || {}).tagName || '')) { e.preventDefault(); el.search.focus(); el.search.select(); }
@@ -2820,7 +3635,7 @@ label.btn:focus-visible, .btn:focus-visible { outline: 2px solid var(--s1); outl
     if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (A.store.get('theme', 'auto') === 'auto') { applyTheme(); render(); } });
 
     // remember when you were last here, for "new since your last visit"
-    const stamp = () => A.store.set('lastVisit', Date.now());
+    const stamp = () => { A.store.set('lastVisit', Date.now()); A.seen.commit(A.db); };
     window.addEventListener('pagehide', stamp);
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') stamp(); else if (due() && !A.status.busy) A.refresh({ manual: false }); });
     setInterval(() => { if (document.visibilityState === 'visible' && due() && !A.status.busy) A.refresh({ manual: false }); }, 10 * 60e3);
